@@ -171,6 +171,15 @@
 #define LM356X_HW_RESET		0
 #define LM356X_HW_ACTIVE	1
 
+/* CM Torch Constants */
+#define LM356X_CM_TORCH_OFF              0
+#define LM356X_CM_TORCH_ON               1
+#define LM356X_CM_TORCH_ON_HIGH          2
+#define LM356X_CM_TORCH_ON_DEATHRAY      3
+#define LM356X_CM_TORCH_CURRENT_NORMAL   187500
+#define LM356X_CM_TORCH_CURRENT_HIGH     343750
+#define LM356X_CM_TORCH_CURRENT_DEATHRAY 500000
+
 struct led_limits {
 	unsigned long torch_current_min;
 	unsigned long torch_current_max;
@@ -930,6 +939,71 @@ static ssize_t attr_torch_enable_store(struct device *dev,
 	return size;
 }
 
+static ssize_t attr_cm_torch_enable_show(struct device *dev,
+					struct device_attribute *attr,
+					char *buf)
+{
+	struct lm356x_drv_data *data = dev_get_drvdata(dev);
+	u8 value;
+	int result;
+
+	result = lm356x_get_reg_data(data, LM356X_REG_ENABLE, &value);
+
+	if (result)
+		return result;
+
+	/* Get torch enable */
+	value &= LM356X_ENABLE_EN_MASK;
+	value = (value == LM356X_ENABLE_EN_TORCH_MODE) ? 1 : 0;
+
+	return snprintf(buf, PAGE_SIZE, "%u\n", value);
+}
+
+static ssize_t attr_cm_torch_enable_store(struct device *dev,
+					struct device_attribute *attr,
+					const char *buf, size_t size)
+{
+	struct lm356x_drv_data *data = dev_get_drvdata(dev);
+    unsigned long mode;
+    unsigned int torch_current;
+	unsigned int torch_mode;
+    int result;
+
+	result = strict_strtoul(buf, 10, &mode);
+	if (result)
+		return -EINVAL;
+
+
+    switch (mode) {
+        case LM356X_CM_TORCH_OFF:
+            torch_mode = 0;
+            torch_current = LM356X_CM_TORCH_CURRENT_NORMAL;
+            break;
+        case LM356X_CM_TORCH_ON:
+            torch_mode = 1;
+            torch_current = LM356X_CM_TORCH_CURRENT_NORMAL;
+            break;
+        case LM356X_CM_TORCH_ON_HIGH:
+            torch_mode = 1;
+            torch_current = LM356X_CM_TORCH_CURRENT_HIGH;
+            break;
+        case LM356X_CM_TORCH_ON_DEATHRAY:
+            torch_mode = 1;
+            torch_current = LM356X_CM_TORCH_CURRENT_DEATHRAY;
+            break;
+        default:
+            return -EINVAL;
+    }
+
+	result = lm356x_torch_mode(data, torch_mode) || lm356x_set_torch_current(data, torch_current);
+
+	if (result)
+		return result;
+
+	return size;
+}
+
+
 static ssize_t attr_torch_current_show(struct device *dev,
 					struct device_attribute *attr,
 					char *buf)
@@ -1222,6 +1296,8 @@ static ssize_t attr_status_show(struct device *dev,
 
 }
 static struct device_attribute attributes[] = {
+	__ATTR(cm_torch, 0660, \
+		attr_cm_torch_enable_show, attr_cm_torch_enable_store),
 	__ATTR(torch_enable, 0660, \
 		attr_torch_enable_show, attr_torch_enable_store),
 	__ATTR(torch_current, 0660, \
@@ -1239,6 +1315,7 @@ static struct device_attribute attributes[] = {
 	__ATTR(privacy_current, 0660,
 		attr_privacy_current_show, attr_privacy_current_store),
 	__ATTR(status, 0440, attr_status_show, NULL),
+
 };
 
 static int lm356x_create_sysfs_interfaces(struct device *dev)
