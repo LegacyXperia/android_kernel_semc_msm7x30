@@ -1044,6 +1044,7 @@ vpe_unregister_chrdev:
 	unregister_chrdev_region(msm_vpe_devno, 1);
 vpe_iounmap:
 	iounmap(vpe_device->vpebase);
+	vpe_device->vpebase = NULL;
 vpe_release_mem_region:
 	release_mem_region(vpemem->start, (vpemem->end - vpemem->start) + 1);
 vpe_free_device:
@@ -1061,6 +1062,7 @@ static int __msm_vpe_remove(struct platform_device *pdev)
 	unregister_chrdev_region(msm_vpe_devno, 1);
 
 	iounmap(vpe_device->vpebase);
+	vpe_device->vpebase = NULL;
 	release_mem_region(vpemem->start,
 			   (vpemem->end - vpemem->start) + 1);
 	return 0;
