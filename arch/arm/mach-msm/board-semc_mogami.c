@@ -4068,7 +4068,6 @@ struct ion_platform_heap msm7x30_heaps[] = {
 
 static struct ion_platform_data ion_pdata = {
 	.nr = MSM_ION_HEAP_NUM,
-	.has_outer_cache = 1,
 	.heaps = msm7x30_heaps,
 };
 
