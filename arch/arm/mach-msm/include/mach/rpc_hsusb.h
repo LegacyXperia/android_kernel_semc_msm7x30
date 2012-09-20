@@ -25,7 +25,7 @@
 #include <mach/msm_otg.h>
 #include <mach/msm_hsusb.h>
 
-#if defined(CONFIG_MSM_ONCRPCROUTER) && !defined(CONFIG_ARCH_MSM8X60)
+#ifdef CONFIG_MSM_RPC_USB
 int msm_hsusb_rpc_connect(void);
 int msm_hsusb_phy_reset(void);
 int msm_hsusb_vbus_powerup(void);
