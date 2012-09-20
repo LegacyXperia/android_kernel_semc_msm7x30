@@ -101,7 +101,6 @@ ifndef CONFIG_ARCH_APQ8064
 ifndef CONFIG_ARCH_MSM8960
 ifndef CONFIG_ARCH_MSM8X60
 ifndef CONFIG_ARCH_MSM8974
-	obj-$(CONFIG_MSM_SMD) += pmic.o
 ifndef CONFIG_ARCH_MSM7X30
 	obj-$(CONFIG_MSM_ONCRPCROUTER) += rpc_hsusb.o rpc_pmapp.o rpc_fsusb.o
 else
@@ -419,6 +418,7 @@ obj-$(CONFIG_MSM_HSIC_SYSMON_TEST) += hsic_sysmon_test.o
 obj-$(CONFIG_MSM_RPM_SMD) += rpm-smd.o
 obj-$(CONFIG_MSM_CPR) += msm_cpr.o
 obj-$(CONFIG_MSM_VP_REGULATOR) += msm_vp.o
+obj-$(CONFIG_MSM_RPC_PMIC) += pmic.o
 
 obj-$(CONFIG_MSM_USE_USER_ACCESSIBLE_TIMERS) += timer_page.o
 
