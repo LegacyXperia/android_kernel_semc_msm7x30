@@ -37,8 +37,7 @@
 #include <linux/pmic8058-xoadc.h>
 #include <linux/regulator/pmic8058-regulator.h>
 #include <linux/regulator/pm8058-xo.h>
-#include <linux/pwm.h>
-#include <linux/pmic8058-pwm.h>
+#include <linux/mfd/pm8xxx/pwm.h>
 
 #define PM8058_GPIOS		40
 #define PM8058_MPPS		12
@@ -122,12 +121,12 @@ struct pm8058_platform_data {
 	struct pmic8058_othc_config_pdata	*othc1_pdata;
 	struct pmic8058_othc_config_pdata	*othc2_pdata;
 	struct xoadc_platform_data		*xoadc_pdata;
-	struct pm8058_pwm_pdata			*pwm_pdata;
 	struct pm8058_vreg_pdata		*regulator_pdatas;
 	int					num_regulators;
 	struct pm8058_xo_pdata			*xo_buffer_pdata;
 	int					num_xo_buffers;
 	struct pmic8058_charger_data		*charger_pdata;
+	struct pm8xxx_pwm_platform_data		*pwm_pdata;
 };
 
 #endif  /* __MFD_PMIC8058_H__ */
