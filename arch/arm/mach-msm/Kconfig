@@ -2823,4 +2823,9 @@ config SEMC_CAMERA_8MP
 	help
 	  Increased PMEP_ADSP for phones with 8MP sensors.
 
+config FORCE_FAST_CHARGE
+	bool "Force AC charge mode at will"
+	help
+	  A simple sysfs interface to force adapters that
+	  are detected as USB to charge as AC.
 endif
