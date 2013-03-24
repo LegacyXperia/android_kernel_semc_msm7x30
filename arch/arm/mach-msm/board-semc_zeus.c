@@ -2564,6 +2564,31 @@ static struct msm_spm_platform_data msm_spm_data __initdata = {
 	.vctl_timeout_us = 50,
 };
 
+#ifdef CONFIG_INPUT_KEYRESET
+#include <linux/keyreset.h>
+/* keyreset platform device */
+static int semc_reset_keys_up[] = {
+	KEY_VOLUMEDOWN,
+	0
+};
+
+static struct keyreset_platform_data semc_reset_keys_pdata = {
+	.keys_up = semc_reset_keys_up,
+	.keys_down = {
+		KEY_POWER,
+		KEY_HOME,
+		0
+	},
+};
+
+struct platform_device semc_reset_keys_device = {
+	.name = KEYRESET_NAME,
+	.dev    = {
+		.platform_data = &semc_reset_keys_pdata,
+	},
+};
+#endif
+
 static void __init msm7x30_init(void)
 {
 	unsigned smem_size;
@@ -2612,6 +2637,9 @@ static void __init msm7x30_init(void)
 	msm7x30_init_nand();
 	msm_qsd_spi_init();
 
+#ifdef CONFIG_INPUT_KEYRESET
+	platform_device_register(&semc_reset_keys_device);
+#endif
 	msm_fb_add_devices();
 	msm_pm_set_platform_data(msm_pm_data, ARRAY_SIZE(msm_pm_data));
 	BUG_ON(msm_pm_boot_init(&msm_pm_boot_pdata));
