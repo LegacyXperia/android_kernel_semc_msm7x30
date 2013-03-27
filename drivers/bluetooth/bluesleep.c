@@ -62,6 +62,8 @@
 #define VERSION		"1.1"
 #define PROC_DIR	"bluetooth/sleep"
 
+#define BT_BLUEDROID_SUPPORT 1
+
 struct bluesleep_info {
 	unsigned host_wake;
 	unsigned ext_wake;
@@ -89,9 +91,14 @@ DECLARE_DELAYED_WORK(sleep_workqueue, bluesleep_sleep_work);
 #define BT_TXDATA	0x02
 #define BT_ASLEEP	0x04
 
+#if BT_BLUEDROID_SUPPORT
+static bool has_lpm_enabled = false;
+#else
 /* global pointer to a single hci device. */
 static struct hci_dev *bluesleep_hdev;
+#endif
 
+static struct platform_device *bluesleep_uart_dev;
 static struct bluesleep_info *bsi;
 
 /* module usage */
@@ -101,8 +108,10 @@ static atomic_t open_count = ATOMIC_INIT(1);
  * Local function prototypes
  */
 
+#if !BT_BLUEDROID_SUPPORT
 static int bluesleep_hci_event(struct notifier_block *this,
 			    unsigned long event, void *data);
+#endif
 
 /*
  * Global variables
@@ -120,10 +129,12 @@ static struct timer_list tx_timer;
 /** Lock for state transitions */
 static spinlock_t rw_lock;
 
+#if !BT_BLUEDROID_SUPPORT
 /** Notifier block for HCI events */
 struct notifier_block hci_event_nblock = {
 	.notifier_call = bluesleep_hci_event,
 };
+#endif
 
 struct proc_dir_entry *bluetooth_dir, *sleep_dir;
 
@@ -237,6 +248,7 @@ static void bluesleep_outgoing_data(void)
 	spin_unlock_irqrestore(&rw_lock, irq_flags);
 }
 
+#if !BT_BLUEDROID_SUPPORT
 /**
  * Handles HCI device events.
  * @param this Not used.
@@ -274,6 +286,7 @@ static int bluesleep_hci_event(struct notifier_block *this,
 
 	return NOTIFY_DONE;
 }
+#endif
 
 /**
  * Handles transmission timer expiration.
@@ -401,6 +414,80 @@ static void bluesleep_stop(void)
 		BT_ERR("Couldn't disable hostwake IRQ wakeup mode\n");
 	free_irq(bsi->host_wake_irq, NULL);
 }
+
+#if BT_BLUEDROID_SUPPORT
+static struct uart_port *bluesleep_get_uart_port(void)
+{
+	struct uart_port *uport = NULL;
+	if (bluesleep_uart_dev)
+		uport =  (struct uart_port *)platform_get_drvdata(bluesleep_uart_dev);
+
+	return uport;
+}
+
+static int bluesleep_read_proc_lpm(char *page, char **start, off_t offset,
+					int count, int *eof, void *data)
+{
+	*eof = 1;
+	return sprintf(page, "unsupported to read\n");
+}
+
+static int bluesleep_write_proc_lpm(struct file *file, const char *buffer,
+					unsigned long count, void *data)
+{
+	char b;
+
+	if (count < 1)
+	return -EINVAL;
+
+	if (copy_from_user(&b, buffer, 1))
+		return -EFAULT;
+
+	if (b == '0') {
+		/* HCI_DEV_UNREG */
+		bluesleep_stop();
+		has_lpm_enabled = false;
+		bsi->uport = NULL;
+	} else {
+		/* HCI_DEV_REG */
+		if (!has_lpm_enabled) {
+			has_lpm_enabled = true;
+			bsi->uport = bluesleep_get_uart_port();
+			/* if bluetooth started, start bluesleep*/
+			bluesleep_start();
+		}
+	}
+
+	return count;
+}
+
+static int bluesleep_read_proc_btwrite(char *page, char **start, off_t offset,
+					int count, int *eof, void *data)
+{
+	*eof = 1;
+	return sprintf(page, "unsupported to read\n");
+}
+
+static int bluesleep_write_proc_btwrite(struct file *file, const char *buffer,
+					unsigned long count, void *data)
+{
+	char b;
+
+	if (count < 1)
+		return -EINVAL;
+
+	if (copy_from_user(&b, buffer, 1))
+		return -EFAULT;
+
+	/* HCI_DEV_WRITE */
+	if (b != '0') {
+		bluesleep_outgoing_data();
+	}
+
+	return count;
+}
+#endif
+
 /**
  * Read the <code>BT_WAKE</code> GPIO pin value via the proc interface.
  * When this function returns, <code>page</code> will contain a 1 if the
@@ -478,6 +565,10 @@ static int bluepower_read_proc_hostwake(char *page, char **start, off_t offset,
 	return sprintf(page, "hostwake: %u \n", gpio_get_value(bsi->host_wake));
 }
 
+void bluesleep_setup_uart_port(struct platform_device *uart_dev)
+{
+	bluesleep_uart_dev = uart_dev;
+}
 
 /**
  * Read the low-power status of the Host via the proc interface.
@@ -655,7 +746,9 @@ static int __init bluesleep_init(void)
 	if (retval)
 		return retval;
 
+#if !BT_BLUEDROID_SUPPORT
 	bluesleep_hdev = NULL;
+#endif
 
 	bluetooth_dir = proc_mkdir("bluetooth", NULL);
 	if (bluetooth_dir == NULL) {
@@ -705,6 +798,28 @@ static int __init bluesleep_init(void)
 		goto fail;
 	}
 
+#if BT_BLUEDROID_SUPPORT
+	/* read/write proc entries */
+	ent = create_proc_entry("lpm", 0, sleep_dir);
+	if (ent == NULL) {
+		BT_ERR("Unable to create /proc/%s/lpm entry", PROC_DIR);
+		retval = -ENOMEM;
+		goto fail;
+	}
+	ent->read_proc = bluesleep_read_proc_lpm;
+	ent->write_proc = bluesleep_write_proc_lpm;
+
+	/* read/write proc entries */
+	ent = create_proc_entry("btwrite", 0, sleep_dir);
+	if (ent == NULL) {
+		BT_ERR("Unable to create /proc/%s/btwrite entry", PROC_DIR);
+		retval = -ENOMEM;
+		goto fail;
+	}
+	ent->read_proc = bluesleep_read_proc_btwrite;
+	ent->write_proc = bluesleep_write_proc_btwrite;
+#endif
+
 	flags = 0; /* clear all status bits */
 
 	/* Initialize spinlock. */
@@ -718,11 +833,17 @@ static int __init bluesleep_init(void)
 	/* initialize host wake tasklet */
 	tasklet_init(&hostwake_task, bluesleep_hostwake_task, 0);
 
+#if !BT_BLUEDROID_SUPPORT
 	hci_register_notifier(&hci_event_nblock);
+#endif
 
 	return 0;
 
 fail:
+#if BT_BLUEDROID_SUPPORT
+	remove_proc_entry("btwrite", sleep_dir);
+	remove_proc_entry("lpm", sleep_dir);
+#endif
 	remove_proc_entry("asleep", sleep_dir);
 	remove_proc_entry("proto", sleep_dir);
 	remove_proc_entry("hostwake", sleep_dir);
@@ -737,9 +858,15 @@ fail:
  */
 static void __exit bluesleep_exit(void)
 {
+#if !BT_BLUEDROID_SUPPORT
 	hci_unregister_notifier(&hci_event_nblock);
+#endif
 	platform_driver_unregister(&bluesleep_driver);
 
+#if BT_BLUEDROID_SUPPORT
+	remove_proc_entry("btwrite", sleep_dir);
+	remove_proc_entry("lpm", sleep_dir);
+#endif
 	remove_proc_entry("asleep", sleep_dir);
 	remove_proc_entry("proto", sleep_dir);
 	remove_proc_entry("hostwake", sleep_dir);
