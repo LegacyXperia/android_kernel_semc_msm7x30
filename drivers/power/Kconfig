@@ -432,6 +432,12 @@ config BQ27520_TEST_ENABLE
 	help
 	  Say Y here to enable Test sysfs Interface for BQ27520 Drivers.
 
+config BATTERY_ZEUS
+       tristate "Zeus Fuel-gauge"
+       depends on ARCH_MSM
+       help
+         Say Y to enable support for the fuel-gauge in Zeus
+
 config PM8921_CHARGER
 	tristate "PM8921 Charger driver"
 	depends on MFD_PM8921_CORE
