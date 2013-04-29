@@ -2534,6 +2534,17 @@ config SEMC_CHARGER_USB_ARCH
 	help
 	  This enables USB interface for charger.
 
+config SEMC_BATTERY_SHOW_HEALTH
+	bool "Enable battery health support"
+	depends on BATTERY_SEMC_ARCH
+	default n if BATTERY_CHARGALG
+	default y if !BATTERY_CHARGALG
+	help
+	  Enable if battery health property is not supported
+	  in any other module besides this.
+	  This enables support for power supply class
+	  POWER_SUPPLY_PROP_HEALTH property.
+
 config MSM_RTB
 	bool "Register tracing"
 	help
