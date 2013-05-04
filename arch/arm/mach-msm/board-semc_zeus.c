@@ -3065,6 +3065,13 @@ static uint32_t msm_sdcc_setup_gpio(int dev_id, unsigned int enable)
 		if (curr->sleep_cfg_data) {
 			msm_gpios_enable(curr->sleep_cfg_data, curr->size);
 			msm_gpios_free(curr->sleep_cfg_data, curr->size);
+			if (dev_id == 4) {
+				/*
+				 * 200 milliseconds delay should be sufficient to allow
+				 * microSD reaches zero voltage when uSD is power off.
+				 */
+				msleep(200);
+			}
 		} else {
 			msm_gpios_disable_free(curr->cfg_data, curr->size);
 		}
