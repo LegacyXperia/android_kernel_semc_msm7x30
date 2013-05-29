@@ -22,7 +22,7 @@
 
 #ifdef CONFIG_F2FS_CHECK_FS
 #define f2fs_bug_on(condition)	BUG_ON(condition)
-#define f2fs_down_write(x, y)	down_write_nest_lock(x, y)
+#define f2fs_down_write(x, y)	down_write(x)
 #else
 #define f2fs_bug_on(condition)	WARN_ON(condition)
 #define f2fs_down_write(x, y)	down_write(x)
@@ -31,6 +31,7 @@
 /*
  * For mount options
  */
+#define F2FS_SUPER_MAGIC	0xF2F52010	/* F2FS Magic Number */
 #define F2FS_MOUNT_BG_GC		0x00000001
 #define F2FS_MOUNT_DISABLE_ROLL_FORWARD	0x00000002
 #define F2FS_MOUNT_DISCARD		0x00000004
@@ -1105,6 +1106,11 @@ static inline void f2fs_stop_checkpoint(struct f2fs_sb_info *sbi)
 {
 	set_ckpt_flags(sbi->ckpt, CP_ERROR_FLAG);
 	sbi->sb->s_flags |= MS_RDONLY;
+}
+
+static inline struct inode *file_inode(struct file *f)
+{
+	return f->f_path.dentry->d_inode;
 }
 
 #define get_inode_mode(i) \
