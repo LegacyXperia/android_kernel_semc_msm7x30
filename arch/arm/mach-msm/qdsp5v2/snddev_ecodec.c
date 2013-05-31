@@ -23,6 +23,8 @@
 #include <mach/debug_mm.h>
 #include <linux/slab.h>
 
+static int marimba_eoff = 800;
+
 /* Context for each external codec device */
 struct snddev_ecodec_state {
 	struct snddev_ecodec_data *data;
@@ -417,6 +419,10 @@ static int snddev_ecodec_probe(struct platform_device *pdev)
 				pdata->max_voice_rx_vol[i];
 			dev_info->min_voc_rx_vol[i] =
 				pdata->min_voice_rx_vol[i];
+			if (dev_info->max_voc_rx_vol[i] != dev_info->min_voc_rx_vol[i]) {
+				dev_info->max_voc_rx_vol[i] += marimba_eoff;
+				dev_info->min_voc_rx_vol[i] += marimba_eoff;
+			}
 		}
 	}
 error:

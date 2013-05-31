@@ -35,6 +35,8 @@
 #include <linux/slab.h>
 #include <mach/cpuidle.h>
 
+static int marimba_ioff = 800;
+
 #define SMPS_AUDIO_PLAYBACK_ID	"AUPB"
 #define SMPS_AUDIO_RECORD_ID	"AURC"
 
@@ -838,6 +840,10 @@ static int snddev_icodec_probe(struct platform_device *pdev)
 				pdata->max_voice_rx_vol[i];
 			dev_info->min_voc_rx_vol[i] =
 				pdata->min_voice_rx_vol[i];
+			if (dev_info->max_voc_rx_vol[i] != dev_info->min_voc_rx_vol[i]) {
+				dev_info->max_voc_rx_vol[i] += marimba_ioff;
+				dev_info->min_voc_rx_vol[i] += marimba_ioff;
+			}
 		}
 		/*sidetone is enabled only for  the device which
 		property set for side tone*/
