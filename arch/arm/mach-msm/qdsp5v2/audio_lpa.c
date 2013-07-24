@@ -820,7 +820,7 @@ static int audlpa_ion_add(struct audio *audio,
 	struct ion_handle *handle;
 	unsigned long ionflag;
 
-	MM_ERR("\n"); /* Macro prints the file name and function */
+	MM_DBG("\n"); /* Macro prints the file name and function */
 	region = kmalloc(sizeof(*region), GFP_KERNEL);
 
 	if (!region) {
