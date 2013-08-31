@@ -26,7 +26,7 @@ endif
 
 ifeq ($(CONFIG_FB_MSM_OVERLAY),y)
 obj-y += mdp4_overlay.o
-obj-y += mdp4_overlay_lcdc.o
+obj-$(CONFIG_FB_MSM_LCDC) += mdp4_overlay_lcdc.o
 ifeq ($(CONFIG_FB_MSM_MIPI_DSI),y)
 obj-y += mdp4_overlay_dsi_video.o
 obj-y += mdp4_overlay_dsi_cmd.o
