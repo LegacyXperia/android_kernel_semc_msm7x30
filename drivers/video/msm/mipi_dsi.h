@@ -349,23 +349,27 @@ static inline void mipi_dsi_clk_enable(void)
 {
 	/* empty */
 }
-void mipi_dsi_clk_disable(void)
+static inline void mipi_dsi_clk_disable(void)
 {
 	/* empty */
 }
-void mipi_dsi_prepare_clocks(void)
+static inline void mipi_dsi_unprepare_clocks(void)
 {
 	/* empty */
 }
-void mipi_dsi_unprepare_clocks(void)
+static inline void mipi_dsi_prepare_ahb_clocks(void)
 {
 	/* empty */
 }
-void mipi_dsi_ahb_ctrl(u32 enable)
+static inline void mipi_dsi_unprepare_ahb_clocks(void)
 {
 	/* empty */
 }
-void mipi_dsi_phy_ctrl(int on)
+static inline void mipi_dsi_ahb_ctrl(u32 enable)
+{
+	/* empty */
+}
+static inline void mipi_dsi_phy_ctrl(int on)
 {
 	/* empty */
 }
