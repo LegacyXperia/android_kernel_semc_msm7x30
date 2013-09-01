@@ -560,13 +560,6 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 			mdp4_dmap_done_dsi_video(0);
 		else if (panel & MDP4_PANEL_DSI_CMD)
 			mdp4_dmap_done_dsi_cmd(0);
-#else
-		else { /* MDDI */
-			mdp4_dma_p_done_mddi(dma);
-			mdp_pipe_ctrl(MDP_DMA2_BLOCK,
-				MDP_BLOCK_POWER_OFF, TRUE);
-			complete(&dma->comp);
-		}
 #endif
 #else
 		else {
@@ -579,16 +572,15 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 	}
 	if (isr & INTR_DMA_S_DONE) {
 		mdp4_stat.intr_dma_s++;
-#if defined(CONFIG_FB_MSM_OVERLAY) && defined(CONFIG_FB_MSM_MDDI)
-		dma = &dma2_data;
-#else
 		dma = &dma_s_data;
-#endif
-
-		dma->busy = FALSE;
-		mdp_pipe_ctrl(MDP_DMA_S_BLOCK,
-				MDP_BLOCK_POWER_OFF, TRUE);
-		complete(&dma->comp);
+		if (panel & MDP4_PANEL_MDDI)
+			mdp4_dmas_done_mddi(0);
+		else {
+			spin_lock(&mdp_spin_lock);
+			dma->busy = FALSE;
+			spin_unlock(&mdp_spin_lock);
+			complete(&dma->comp);
+		}
 	}
 	if (isr & INTR_DMA_E_DONE) {
 		mdp4_stat.intr_dma_e++;
@@ -611,10 +603,9 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 #ifdef CONFIG_FB_MSM_MIPI_DSI
 			if (panel & MDP4_PANEL_DSI_CMD)
 				mdp4_overlay0_done_dsi_cmd(0);
-#else
-			if (panel & MDP4_PANEL_MDDI)
-				mdp4_overlay0_done_mddi(dma);
 #endif
+			if (panel & MDP4_PANEL_MDDI)
+				mdp4_overlay0_done_mddi(0);
 		}
 		mdp_hw_cursor_done();
 	}
