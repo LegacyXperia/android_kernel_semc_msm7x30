@@ -467,6 +467,11 @@ struct lvds_panel_platform_data {
 	int *gpio;
 };
 
+struct mddi_panel_platform_data {
+	int pwm_channel;
+	void (*pwm_config)(void);
+};
+
 struct msm_wfd_platform_data {
 	char (*wfd_check_mdp_iommu_split)(void);
 };
