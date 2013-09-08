@@ -752,6 +752,106 @@ config MACH_MSM8X55_SVLTE_SURF
        help
          Support for the Qualcomm MSM8x55 SVLTE SURF eval board.
 
+config BOARD_SEMC_MOGAMI
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	default n
+	bool "SonyEricsson Mogami Platform"
+	help
+	  Support for the SonyEricsson mogami platform.
+
+config BOARD_SEMC_ZEUS
+	depends on ARCH_MSM7X30
+	depends on !MSM_STACKED_MEMORY
+	default n
+	bool "SonyEricsson Zeus Platform"
+	help
+	  Support for the SonyEricsson zeus platform.
+
+config MACH_SEMC_MOGAMI
+	depends on BOARD_SEMC_MOGAMI
+	default n
+	bool "SonyEricsson Mogami CDB"
+	help
+	  Support for the SonyEricsson Mogami CDB (development board).
+
+config MACH_SEMC_ANZU
+	depends on BOARD_SEMC_MOGAMI
+	default n
+	bool "SonyEricsson Anzu"
+	help
+	  Support for the SonyEricsson Anzu devices.
+
+config MACH_SEMC_COCONUT
+	depends on BOARD_SEMC_MOGAMI
+	default n
+	bool "SonyEricsson Coconut"
+	help
+	  Support for the SonyEricsson Coconut devices.
+
+config MACH_SEMC_HAIDA
+	depends on BOARD_SEMC_MOGAMI
+	default n
+	bool "SonyEricsson Haida"
+	help
+	  Support for the SonyEricsson Haida devices.
+
+config MACH_SEMC_HALLON
+	depends on BOARD_SEMC_MOGAMI
+	default n
+	bool "SonyEricsson Hallon"
+	help
+	  Support for the SonyEricsson Hallon devices.
+
+config MACH_SEMC_IYOKAN
+	depends on BOARD_SEMC_MOGAMI
+	default n
+	bool "SonyEricsson Iyokan"
+	help
+	  Support for the SonyEricsson Iyokan devices.
+
+config MACH_SEMC_MANGO
+	depends on BOARD_SEMC_MOGAMI
+	default n
+	bool "SonyEricsson Mango"
+	help
+	  Support for the SonyEricsson Mango devices.
+
+config MACH_SEMC_SATSUMA
+	depends on BOARD_SEMC_MOGAMI
+	default n
+	bool "SonyEricsson Satsuma"
+	help
+	  Support for the SonyEricsson Satsuma devices.
+
+config MACH_SEMC_SMULTRON
+	depends on BOARD_SEMC_MOGAMI
+	default n
+	bool "SonyEricsson Smultron"
+	help
+	  Support for the SonyEricsson Smultron devices.
+
+config MACH_SEMC_URUSHI
+	depends on BOARD_SEMC_MOGAMI
+	default n
+	bool "SonyEricsson Urushi"
+	help
+	  Support for the SonyEricsson Urushi devices.
+
+config MACH_SEMC_ZEUS
+	depends on BOARD_SEMC_ZEUS
+	default n
+	bool "SonyEricsson Zeus"
+	help
+	  Support for the SonyEricsson Zeus devices.
+
+config MACH_SEMC_PHOENIX
+	depends on BOARD_SEMC_ZEUS
+	default n
+	bool "SonyEricsson Phoenix"
+	help
+	  Support for the SonyEricsson Phoenix devices.
+
 config MACH_MSM8X60_SURF
 	depends on ARCH_MSM8X60
 	default n
