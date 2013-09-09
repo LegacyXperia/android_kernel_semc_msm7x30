@@ -1092,16 +1092,6 @@ static struct platform_device msm_ebi2_lcd_device = {
 	.resource       = msm_ebi2_lcd_resources,
 };
 
-static struct platform_device msm_lcdc_device = {
-	.name   = "lcdc",
-	.id     = 0,
-};
-
-static struct platform_device msm_dtv_device = {
-	.name   = "dtv",
-	.id     = 0,
-};
-
 static struct platform_device msm_tvenc_device = {
 	.name   = "tvenc",
 	.id     = 0,
@@ -1235,10 +1225,6 @@ void __init msm_fb_register_device(char *name, void *data)
 		msm_register_device(&msm_ebi2_lcd_device, data);
 	else if (!strncmp(name, "tvenc", 5))
 		msm_register_device(&msm_tvenc_device, data);
-	else if (!strncmp(name, "lcdc", 4))
-		msm_register_device(&msm_lcdc_device, data);
-	else if (!strncmp(name, "dtv", 3))
-		msm_register_device(&msm_dtv_device, data);
 #ifdef CONFIG_FB_MSM_TVOUT
 	else if (!strncmp(name, "tvout_device", 12))
 		msm_register_device(&tvout_msm_device, data);
