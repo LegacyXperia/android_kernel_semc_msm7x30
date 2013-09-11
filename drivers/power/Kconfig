@@ -417,6 +417,14 @@ config BATTERY_CHARGALG_ENABLE_STEP_CHARGING
 	  Say Y to enable step charging. Step charging controls the maximum
 	  charging current relative to the actual battery voltage.
 
+config BATTERY_SEMC_ARCH
+	bool "SEMC battery data handling"
+	depends on ARCH_MSM
+	default n
+	help
+	  Say Y to enable support for SEMC battery data handling in the
+	  platform.
+
 config BQ27520_TEST_ENABLE
 	bool "Enable BQ27520 Fuel Gauge Chip Test"
 	depends on BATTERY_BQ27520
