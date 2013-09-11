@@ -382,6 +382,19 @@ config BATTERY_BQ27541
 	help
 	  Say Y here to enable support for batteries with BQ27541 (I2C) chips.
 
+config BATTERY_BQ27520_SEMC
+	tristate "BQ27520 battery driver (SEMC)"
+	depends on I2C
+	default n
+	help
+	  Say Y here to enable support for batteries with BQ27520 (I2C) chips.
+
+config BATTERY_BQ27520_SEAL_FW
+	tristate "Seal the frimware of BQ27520"
+	depends on BATTERY_BQ27520_SEMC
+	help
+	  Say Y to seal the firmware of fuel gauge
+
 config BQ27520_TEST_ENABLE
 	bool "Enable BQ27520 Fuel Gauge Chip Test"
 	depends on BATTERY_BQ27520
