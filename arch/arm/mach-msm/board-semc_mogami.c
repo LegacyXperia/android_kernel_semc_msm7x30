@@ -811,6 +811,9 @@ static struct platform_device msm_gemini_device = {
 static uint32_t audio_pamp_gpio_config =
    GPIO_CFG(82, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA);
 
+static uint32_t HAC_amp_gpio_config =
+   GPIO_CFG(109, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA);
+
 static int __init snddev_poweramp_gpio_init(void)
 {
 	int rc;
@@ -822,6 +825,15 @@ static int __init snddev_poweramp_gpio_init(void)
 			"%s: gpio_tlmm_config(%#x)=%d\n",
 			__func__, audio_pamp_gpio_config, rc);
 	}
+
+	/* Enabling HAC amplifier */
+	rc = gpio_tlmm_config(HAC_amp_gpio_config, GPIO_CFG_ENABLE);
+	if (rc) {
+		printk(KERN_ERR
+			"%s: gpio_tlmm_config(%#x)=%d\n",
+			__func__, HAC_amp_gpio_config, rc);
+	}
+
 	return rc;
 }
 
@@ -833,6 +845,18 @@ void msm_snddev_tx_route_config(void)
 void msm_snddev_tx_route_deconfig(void)
 {
 	pr_debug("%s()\n", __func__);
+}
+
+void msm_snddev_hac_amp_on(void)
+{
+	gpio_set_value(109, 1);	/* enable HAC amp */
+	pr_debug("%s: power on HAC amplifier\n", __func__);
+}
+
+void msm_snddev_hac_amp_off(void)
+{
+	gpio_set_value(109, 0);	/* disable HAC amp */
+	pr_debug("%s: power off HAC amplifier\n", __func__);
 }
 
 void msm_snddev_poweramp_on(void)
