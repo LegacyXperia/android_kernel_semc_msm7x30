@@ -682,4 +682,13 @@ config INPUT_APDS9702
 	  If you say yes here you get support for the APDS9702 chip.
 	  This is used as a proximity sensor.
 
+config INPUT_SIMPLE_REMOTE
+	bool "Simple Remote detection driver"
+	default n
+	select SIMPLE_REMOTE_PLATFORM
+	help
+	  Provides support for detecting 3.5mm audio jack, such as wired
+	  headset. Requires the hardware specific driver
+	  config SIMPLE_REMOTE_PLATFORM
+
 endif
