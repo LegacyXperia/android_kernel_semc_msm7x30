@@ -102,6 +102,9 @@
 #include <mach/semc_charger_usb.h>
 #endif
 
+#ifdef CONFIG_INPUT_BMA250
+#include <linux/bma250.h>
+#endif
 #ifdef CONFIG_INPUT_APDS9702
 #include <linux/apds9702.h>
 #endif
@@ -116,6 +119,11 @@
 
 #ifdef CONFIG_CHARGER_BQ24185
 #define BQ24185_GPIO_IRQ		31
+#endif
+
+#ifdef CONFIG_INPUT_BMA250
+#define BMA250_GPIO			51
+#define BMA250_DEFAULT_RATE		50
 #endif
 
 #if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
@@ -1479,6 +1487,42 @@ static struct lm356x_platform_data lm3561_platform_data = {
 };
 #endif
 
+#ifdef CONFIG_INPUT_BMA250
+static int bma250_gpio_setup(struct device *dev)
+{
+	return gpio_request(BMA250_GPIO, "bma250_irq");
+}
+
+static void bma250_gpio_teardown(struct device *dev)
+{
+	gpio_free(BMA250_GPIO);
+}
+
+static void bma250_hw_config(int enable)
+{
+	return;
+}
+
+static void bma250_power_mode(int enable)
+{
+	return;
+}
+
+static struct registers bma250_reg_setup = {
+	.range                = BMA250_RANGE_4G,
+	.bw_sel               = BMA250_BW_250HZ,
+};
+
+static struct bma250_platform_data bma250_platform_data = {
+	.setup                = bma250_gpio_setup,
+	.teardown             = bma250_gpio_teardown,
+	.hw_config            = bma250_hw_config,
+	.reg                  = &bma250_reg_setup,
+	.power_mode           = bma250_power_mode,
+	.rate                 = BMA250_DEFAULT_RATE,
+};
+#endif
+
 #ifdef CONFIG_INPUT_APDS9702
 #define APDS9702_DOUT_GPIO   88
 #define APDS9702_VDD_VOLTAGE 2900000
@@ -1547,6 +1591,13 @@ static struct i2c_board_info msm_i2c_board_info[] = {
 		.irq = PM8058_GPIO_IRQ(PMIC8058_IRQ_BASE, BQ24185_GPIO_IRQ - 1),
 		.platform_data = &bq24185_platform_data,
 		.type = BQ24185_NAME,
+	},
+#endif
+#ifdef CONFIG_INPUT_BMA250
+	{
+		I2C_BOARD_INFO("bma250", 0x18),
+		.irq = MSM_GPIO_TO_INT(BMA250_GPIO),
+		.platform_data = &bma250_platform_data,
 	},
 #endif
 #ifdef CONFIG_INPUT_APDS9702
