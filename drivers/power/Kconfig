@@ -403,6 +403,20 @@ config CHARGER_BQ24185
 	  Say Y here to enable Support for the TI BQ24185 Battery Charger.
 	  The driver is configured to operate with a single lithium cell.
 
+config BATTERY_CHARGALG
+	bool "Battery charging algorithm"
+	default n
+	help
+	  Say Y to enable charging algorithm for batteries.
+
+config BATTERY_CHARGALG_ENABLE_STEP_CHARGING
+	bool "Enable step charging"
+	depends on BATTERY_CHARGALG
+	default n
+	help
+	  Say Y to enable step charging. Step charging controls the maximum
+	  charging current relative to the actual battery voltage.
+
 config BQ27520_TEST_ENABLE
 	bool "Enable BQ27520 Fuel Gauge Chip Test"
 	depends on BATTERY_BQ27520
