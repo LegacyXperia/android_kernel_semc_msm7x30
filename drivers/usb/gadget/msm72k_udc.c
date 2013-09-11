@@ -308,7 +308,7 @@ static inline enum chg_type usb_get_chg_type(struct usb_info *ui)
 	}
 }
 
-#define USB_WALLCHARGER_CHG_CURRENT 1800
+#define USB_WALLCHARGER_CHG_CURRENT 1500
 #define USB_PROPRIETARY_CHG_CURRENT 500
 static int usb_get_max_power(struct usb_info *ui)
 {
