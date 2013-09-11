@@ -1771,7 +1771,7 @@ static struct platform_device msm_adc_device = {
 
 static struct platform_device *devices[] __initdata = {
 #if defined(CONFIG_SERIAL_MSM) || defined(CONFIG_MSM_SERIAL_DEBUGGER)
-	&msm_device_uart2,
+	&msm_device_uart3,
 #endif
 #ifdef CONFIG_MSM_PROC_COMM_REGULATOR
 	&msm_proccomm_regulator_dev,
@@ -2268,17 +2268,15 @@ static void __init msm7x30_init_nand(void)
 }
 
 #ifdef CONFIG_SERIAL_MSM_CONSOLE
-static struct msm_gpio uart2_config_data[] = {
-	{ GPIO_CFG(49, 2, GPIO_CFG_OUTPUT,  GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), "UART2_RFR"},
-	{ GPIO_CFG(50, 2, GPIO_CFG_INPUT,   GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), "UART2_CTS"},
-	{ GPIO_CFG(51, 2, GPIO_CFG_INPUT,   GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), "UART2_Rx"},
-	{ GPIO_CFG(52, 2, GPIO_CFG_OUTPUT,  GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), "UART2_Tx"},
+static struct msm_gpio uart3_config_data[] = {
+	{ GPIO_CFG(53, 1, GPIO_CFG_INPUT,   GPIO_CFG_PULL_UP, GPIO_CFG_2MA), "UART3_Rx"},
+	{ GPIO_CFG(54, 1, GPIO_CFG_OUTPUT,  GPIO_CFG_NO_PULL, GPIO_CFG_4MA), "UART3_Tx"},
 };
 
-static void msm7x30_init_uart2(void)
+static void msm7x30_init_uart3(void)
 {
-	msm_gpios_request_enable(uart2_config_data,
-			ARRAY_SIZE(uart2_config_data));
+	msm_gpios_request_enable(uart3_config_data,
+			ARRAY_SIZE(uart3_config_data));
 
 }
 #endif
@@ -2338,7 +2336,7 @@ static void __init msm7x30_init(void)
 
 	msm_clock_init(&msm7x30_clock_init_data);
 #ifdef CONFIG_SERIAL_MSM_CONSOLE
-	msm7x30_init_uart2();
+	msm7x30_init_uart3();
 #endif
 	msm_spm_init(&msm_spm_data, 1);
 	platform_device_register(&msm7x30_device_acpuclk);
