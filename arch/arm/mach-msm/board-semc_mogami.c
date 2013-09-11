@@ -84,6 +84,25 @@
 
 #include "keypad-semc.h"
 
+#ifdef CONFIG_CHARGER_BQ24185
+#include <linux/i2c/bq24185_charger.h>
+#endif
+#ifdef CONFIG_BATTERY_BQ27520_SEMC
+#include <linux/i2c/bq27520_battery.h>
+#endif
+#ifdef CONFIG_BATTERY_CHARGALG
+#include <linux/battery_chargalg.h>
+#endif
+#ifdef CONFIG_BATTERY_SEMC_ARCH
+#include <mach/semc_battery_data.h>
+#endif
+#ifdef CONFIG_USB_MSM_OTG_72K
+#include <mach/msm72k_otg.h>
+#endif
+#ifdef CONFIG_SEMC_CHARGER_USB_ARCH
+#include <mach/semc_charger_usb.h>
+#endif
+
 #if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
 #include <linux/lm356x.h>
 #endif
@@ -103,6 +122,10 @@
  * res V4L2 video overlay - i.e. 1280x720x1.5x2
  */
 #define MSM_V4L2_VIDEO_OVERLAY_BUF_SIZE 2764800
+
+#ifdef CONFIG_CHARGER_BQ24185
+#define BQ24185_GPIO_IRQ		(31)
+#endif
 
 #if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
 #define LM356X_HW_RESET_GPIO 2
@@ -167,6 +190,19 @@ struct pm8xxx_gpio_init_info {
 static int pm8058_gpios_init(void)
 {
 	int rc;
+
+#ifdef CONFIG_CHARGER_BQ24185
+	struct pm8xxx_gpio_init_info bq24185_irq = {
+		PM8058_GPIO_PM_TO_SYS(BQ24185_GPIO_IRQ - 1),
+		{
+			.direction      = PM_GPIO_DIR_IN,
+			.pull           = PM_GPIO_PULL_NO,
+			.vin_sel        = PM8058_GPIO_VIN_S3,
+			.function       = PM_GPIO_FUNC_NORMAL,
+			.inv_int_pol    = 0,
+		},
+	};
+#endif
 
 	struct pm8xxx_gpio_init_info sdc4_en = {
 		PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_SDC4_EN_N),
@@ -239,6 +275,14 @@ static int pm8058_gpios_init(void)
 		pr_err("%s PMIC_GPIO_SD_DET config failed\n", __func__);
 		return rc;
 	}
+
+#ifdef CONFIG_CHARGER_BQ24185
+	rc = pm8xxx_gpio_config(bq24185_irq.gpio, &bq24185_irq.config);
+	if (rc) {
+		pr_err("%s BQ24185_GPIO_IRQ config failed with %d\n", __func__, rc);
+		return rc;
+	}
+#endif
 
 	/* Deassert GPIO#23 (source for Ext_POR on WLAN-Volans) */
 	rc = pm8xxx_gpio_config(gpio23.gpio, &gpio23.config);
@@ -1941,6 +1985,154 @@ static struct platform_device android_usb_device = {
 };
 #endif
 
+#ifdef CONFIG_SEMC_CHARGER_USB_ARCH
+static char *semc_chg_usb_supplied_to[] = {
+	BATTERY_CHARGALG_NAME,
+	BQ27520_NAME,
+};
+#endif
+
+#ifdef CONFIG_BATTERY_SEMC_ARCH
+static char *semc_bdata_supplied_to[] = {
+	BQ27520_NAME,
+	BATTERY_CHARGALG_NAME,
+};
+
+static struct semc_battery_platform_data semc_battery_platform_data = {
+	.supplied_to = semc_bdata_supplied_to,
+	.num_supplicants = ARRAY_SIZE(semc_bdata_supplied_to),
+};
+
+static struct platform_device bdata_driver = {
+	.name = SEMC_BDATA_NAME,
+	.id = -1,
+	.dev = {
+		.platform_data = &semc_battery_platform_data,
+	},
+};
+#endif
+
+#ifdef CONFIG_BATTERY_BQ27520_SEMC
+#define GPIO_BQ27520_SOC_INT 20
+#define LIPO_BAT_MAX_VOLTAGE 4200
+#define LIPO_BAT_MIN_VOLTAGE 3000
+#define FULLY_CHARGED_AND_RECHARGE_CAP 95
+
+static char *bq27520_supplied_to[] = {
+	BATTERY_CHARGALG_NAME,
+};
+
+static struct bq27520_block_table bq27520_block_table[BQ27520_BTBL_MAX] = {
+	{0x61, 0x00}, {0x3E, 0x24}, {0x3F, 0x00}, {0x42, 0x00},
+	{0x43, 0x46}, {0x44, 0x00}, {0x45, 0x19}, {0x46, 0x00},
+	{0x47, 0x64}, {0x48, 0x28}, {0x4B, 0xFF}, {0x4C, 0x5F},
+	{0x60, 0xF4}
+};
+
+static int bq27520_gpio_configure(int enable)
+{
+	int rc = 0;
+
+	if (!!enable) {
+		rc = gpio_request(GPIO_BQ27520_SOC_INT, "bq27520");
+		if (rc)
+			pr_err("%s: gpio_requeset failed, "
+					"rc=%d\n", __func__, rc);
+	} else {
+		gpio_free(GPIO_BQ27520_SOC_INT);
+	}
+	return rc;
+}
+
+struct bq27520_platform_data bq27520_platform_data = {
+	.name = BQ27520_NAME,
+	.supplied_to = bq27520_supplied_to,
+	.num_supplicants = ARRAY_SIZE(bq27520_supplied_to),
+	.lipo_bat_max_volt = LIPO_BAT_MAX_VOLTAGE,
+	.lipo_bat_min_volt = LIPO_BAT_MIN_VOLTAGE,
+	.battery_dev_name = SEMC_BDATA_NAME,
+	.gpio_configure = bq27520_gpio_configure,
+	.polling_lower_capacity = FULLY_CHARGED_AND_RECHARGE_CAP,
+	.polling_upper_capacity = 100,
+	.udatap = bq27520_block_table,
+#ifdef CONFIG_BATTERY_CHARGALG
+	.disable_algorithm = battery_chargalg_disable,
+#endif
+};
+#endif
+
+#ifdef CONFIG_CHARGER_BQ24185
+static char *bq24185_supplied_to[] = {
+	BATTERY_CHARGALG_NAME,
+	SEMC_BDATA_NAME,
+};
+
+struct bq24185_platform_data bq24185_platform_data = {
+	.name = BQ24185_NAME,
+	.supplied_to = bq24185_supplied_to,
+	.num_supplicants = ARRAY_SIZE(bq24185_supplied_to),
+	.support_boot_charging = 1,
+	.rsens = BQ24185_RSENS_REF,
+	/* Maximum battery regulation voltage = 4200mV */
+	.mbrv = BQ24185_MBRV_MV_4200,
+	/* Maximum charger current sense voltage = 71.4mV */
+	.mccsv = BQ24185_MCCSV_MV_6p8 | BQ24185_MCCSV_MV_27p2 |
+		BQ24185_MCCSV_MV_37p4,
+#ifdef CONFIG_USB_MSM_OTG_72K
+	.notify_vbus_drop = msm_otg_notify_vbus_drop,
+#endif
+	.vindpm_usb_compliant = VINDPM_4550MV,
+	.vindpm_non_compliant = VINDPM_4390MV,
+};
+#endif
+
+#ifdef CONFIG_BATTERY_CHARGALG
+static char *battery_chargalg_supplied_to[] = {
+	SEMC_BDATA_NAME,
+};
+
+static struct battery_chargalg_platform_data battery_chargalg_platform_data = {
+	.name = BATTERY_CHARGALG_NAME,
+	.supplied_to = battery_chargalg_supplied_to,
+	.num_supplicants = ARRAY_SIZE(battery_chargalg_supplied_to),
+	.ext_eoc_recharge_enable = 1,
+	.temp_hysteresis_design = 3,
+	.ddata = &device_data,
+	.batt_volt_psy_name = BQ27520_NAME,
+	.batt_curr_psy_name = BQ27520_NAME,
+#ifdef CONFIG_CHARGER_BQ24185
+	.turn_on_charger = bq24185_turn_on_charger,
+	.turn_off_charger = bq24185_turn_off_charger,
+	.set_charger_voltage = bq24185_set_charger_voltage,
+	.set_charger_current = bq24185_set_charger_current,
+	.set_input_current_limit = bq24185_set_input_current_limit,
+	.set_charging_status = bq24185_set_ext_charging_status,
+	.get_supply_current_limit = NULL,
+	.get_restrict_ctl = NULL,
+	.get_restricted_setting = NULL,
+	.setup_exchanged_power_supply = NULL,
+	.charge_set_current_1 = 350,
+	.charge_set_current_2 = 550,
+	.charge_set_current_3 = 750,
+	.overvoltage_max_design = 4225,
+#endif
+#ifdef CONFIG_SEMC_CHARGER_USB_ARCH
+	.get_supply_current_limit = semc_charger_usb_current_ma,
+#endif
+	.allow_dynamic_charge_current_ctrl = 1,
+	.average_current_min_limit = -1,
+	.average_current_max_limit = 250,
+};
+
+static struct platform_device battery_chargalg_platform_device = {
+	.name = BATTERY_CHARGALG_NAME,
+	.id = -1,
+	.dev = {
+		.platform_data = &battery_chargalg_platform_data,
+	},
+};
+#endif
+
 #if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
 int lm356x_request_gpio_pins(void)
 {
@@ -2013,6 +2205,22 @@ static struct i2c_board_info msm_i2c_board_info[] = {
 		/* Config-spec is 8-bit = 0x80, src-code need 7-bit => 0x40 */
 		I2C_BOARD_INFO("as3676", 0x80 >> 1),
 		.platform_data = &as3676_platform_data,
+	},
+#endif
+#ifdef CONFIG_BATTERY_BQ27520_SEMC
+	{
+		I2C_BOARD_INFO(BQ27520_NAME, 0xAA >> 1),
+		.irq = MSM_GPIO_TO_INT(GPIO_BQ27520_SOC_INT),
+		.platform_data = &bq27520_platform_data,
+		.type = BQ27520_NAME,
+	},
+#endif
+#ifdef CONFIG_CHARGER_BQ24185
+	{
+		I2C_BOARD_INFO(BQ24185_NAME, 0xD6 >> 1),
+		.irq = PM8058_GPIO_IRQ(PMIC8058_IRQ_BASE, BQ24185_GPIO_IRQ - 1),
+		.platform_data = &bq24185_platform_data,
+		.type = BQ24185_NAME,
 	},
 #endif
 #ifdef CONFIG_LM3560
@@ -2222,43 +2430,18 @@ static void __init msm_qsd_spi_init(void)
 #ifdef CONFIG_USB_EHCI_MSM_72K
 static void msm_hsusb_vbus_power(unsigned phy_info, int on)
 {
-        int rc;
-        static int vbus_is_on;
-	struct pm8xxx_gpio_init_info usb_vbus = {
-		PM8058_GPIO_PM_TO_SYS(36),
-		{
-			.direction      = PM_GPIO_DIR_OUT,
-			.pull           = PM_GPIO_PULL_NO,
-			.output_buffer  = PM_GPIO_OUT_BUF_CMOS,
-			.output_value   = 1,
-			.vin_sel        = 2,
-			.out_strength   = PM_GPIO_STRENGTH_MED,
-			.function       = PM_GPIO_FUNC_NORMAL,
-			.inv_int_pol    = 0,
-		},
-	};
-
-        /* If VBUS is already on (or off), do nothing. */
-        if (unlikely(on == vbus_is_on))
-                return;
-
-        if (on) {
-		rc = pm8xxx_gpio_config(usb_vbus.gpio, &usb_vbus.config);
-		if (rc) {
-                        pr_err("%s PMIC GPIO 36 write failed\n", __func__);
-                        return;
-                }
-	} else {
-		gpio_set_value_cansleep(PM8058_GPIO_PM_TO_SYS(36), 0);
-	}
-
-        vbus_is_on = on;
+#ifdef CONFIG_CHARGER_BQ24185
+	if (on)
+		(void)bq24185_set_opa_mode(CHARGER_BOOST_MODE);
+	else
+		(void)bq24185_set_opa_mode(CHARGER_CHARGER_MODE);
+#endif
 }
 
 static struct msm_usb_host_platform_data msm_usb_host_pdata = {
         .phy_info   = (USB_PHY_INTEGRATED | USB_PHY_MODEL_45NM),
         .vbus_power = msm_hsusb_vbus_power,
-        .power_budget   = 180,
+        .power_budget   = 300,
 };
 #endif
 
@@ -2349,12 +2532,19 @@ static struct msm_otg_platform_data msm_otg_pdata = {
 	.cdr_autoreset		 = CDR_AUTO_RESET_DISABLE,
 	.drv_ampl		 = HS_DRV_AMPLITUDE_DEFAULT,
 	.se1_gating		 = SE1_GATING_DISABLE,
-	.chg_vbus_draw		 = hsusb_chg_vbus_draw,
-	.chg_connected		 = hsusb_chg_connected,
-	.chg_init		 = hsusb_chg_init,
 	.ldo_enable		 = msm_hsusb_ldo_enable,
 	.ldo_init		 = msm_hsusb_ldo_init,
 	.ldo_set_voltage	 = msm_hsusb_ldo_set_voltage,
+#ifdef CONFIG_SEMC_CHARGER_USB_ARCH
+	.chg_vbus_draw		 = semc_charger_usb_vbus_draw,
+	.chg_connected		 = semc_charger_usb_connected,
+	.chg_init		 = semc_charger_usb_init,
+#endif
+#ifdef CONFIG_CHARGER_BQ24185
+	.chg_is_initialized	 = bq24185_charger_initialized,
+	.chg_drawable_ida	 = USB_IDCHG_MAX,
+#endif
+	.phy_can_powercollapse	 = 1,
 };
 
 #ifdef CONFIG_USB_GADGET
@@ -3349,6 +3539,12 @@ static struct platform_device *devices[] __initdata = {
 #ifdef CONFIG_MSM_VPE
 	&msm_vpe_device,
 #endif
+#endif
+#ifdef CONFIG_BATTERY_SEMC_ARCH
+	&bdata_driver,
+#endif
+#ifdef CONFIG_BATTERY_CHARGALG
+	&battery_chargalg_platform_device,
 #endif
 #if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
 	&msm_device_tsif,
@@ -4429,6 +4625,10 @@ static void __init msm7x30_init(void)
 	platform_add_devices(msm_footswitch_devices,
 			     msm_num_footswitch_devices);
 	platform_add_devices(devices, ARRAY_SIZE(devices));
+#ifdef CONFIG_SEMC_CHARGER_USB_ARCH
+	semc_chg_usb_set_supplicants(semc_chg_usb_supplied_to,
+				  ARRAY_SIZE(semc_chg_usb_supplied_to));
+#endif
 #ifdef CONFIG_USB_EHCI_MSM_72K
 	msm_add_host(0, &msm_usb_host_pdata);
 #endif
