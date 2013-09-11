@@ -123,8 +123,12 @@ static struct platform_device ion_dev;
 #define PM8058_MPP_BASE			   PM8058_GPIO_PM_TO_SYS(PM8058_GPIOS)
 #define PM8058_MPP_PM_TO_SYS(pm_gpio)	   (pm_gpio + PM8058_MPP_BASE)
 
-#define DDR1_BANK_BASE 0X20000000
+#define DDR0_BANK_BASE PHYS_OFFSET
+#define DDR0_BANK_SIZE 0X03C00000
+#define DDR1_BANK_BASE 0x07400000
+#define DDR1_BANK_SIZE 0x08C00000
 #define DDR2_BANK_BASE 0X40000000
+#define DDR2_BANK_SIZE 0X10000000
 
 static unsigned int phys_add = DDR2_BANK_BASE;
 unsigned long ebi1_phys_offset = DDR2_BANK_BASE;
@@ -2656,14 +2660,13 @@ static void __init msm7x30_init_early(void)
 static void __init msm7x30_fixup(struct tag *tags, char **cmdline,
 				 struct meminfo *mi)
 {
-	for (; tags->hdr.size; tags = tag_next(tags)) {
-		if (tags->hdr.tag == ATAG_MEM && tags->u.mem.start ==
-							DDR1_BANK_BASE) {
-				ebi1_phys_offset = DDR1_BANK_BASE;
-				phys_add = DDR1_BANK_BASE;
-				break;
-		}
-	}
+	mi->nr_banks = 3;
+	mi->bank[0].start = DDR0_BANK_BASE;
+	mi->bank[0].size = DDR0_BANK_SIZE;
+	mi->bank[1].start = DDR1_BANK_BASE;
+	mi->bank[1].size = DDR1_BANK_SIZE;
+	mi->bank[2].start = DDR2_BANK_BASE;
+	mi->bank[2].size = DDR2_BANK_SIZE;
 }
 
 MACHINE_START(MSM7X30_SURF, "QCT MSM7X30 SURF")
