@@ -674,6 +674,14 @@ config BMP18X_I2C
          To compile this driver as a module, choose M here: the
          module will be called bmp18x-i2c.
 
+config INPUT_BMA250
+	tristate "Bosch BMA250 accelerometer"
+	default n
+	depends on I2C
+	help
+	  Say Y here if you want support for the BMA250 accelerometer
+	  device. This driver only supports I2C communication.
+
 config INPUT_APDS9702
 	tristate "APDS9702 proximity driver"
 	depends on I2C
