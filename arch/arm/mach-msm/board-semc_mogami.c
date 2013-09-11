@@ -666,11 +666,8 @@ static int config_camera_on_gpios(void)
 	config_gpio_table(camera_on_gpio_table,
 		ARRAY_SIZE(camera_on_gpio_table));
 
-	if (adie_get_detected_codec_type() != TIMPANI_ID)
-		/* GPIO1 is shared also used in Timpani RF card so
-		only configure it for non-Timpani RF card */
-		config_gpio_table(camera_on_vcm_gpio_table,
-			ARRAY_SIZE(camera_on_vcm_gpio_table));
+	config_gpio_table(camera_on_vcm_gpio_table,
+		ARRAY_SIZE(camera_on_vcm_gpio_table));
 
 	if (machine_is_msm7x30_fluid()) {
 		config_gpio_table(camera_on_gpio_fluid_table,
@@ -686,11 +683,8 @@ static void config_camera_off_gpios(void)
 	config_gpio_table(camera_off_gpio_table,
 		ARRAY_SIZE(camera_off_gpio_table));
 
-	if (adie_get_detected_codec_type() != TIMPANI_ID)
-		/* GPIO1 is shared also used in Timpani RF card so
-		only configure it for non-Timpani RF card */
-		config_gpio_table(camera_off_vcm_gpio_table,
-			ARRAY_SIZE(camera_off_vcm_gpio_table));
+	config_gpio_table(camera_off_vcm_gpio_table,
+		ARRAY_SIZE(camera_off_vcm_gpio_table));
 
 	if (machine_is_msm7x30_fluid()) {
 		config_gpio_table(camera_off_gpio_fluid_table,
@@ -1426,7 +1420,6 @@ static int bahama_present(void)
 	case MARIMBA_ID:
 		return 0;
 
-	case TIMPANI_ID:
 	default:
 	printk(KERN_ERR "%s: unexpected adie connectivity type: %d\n",
 			__func__, id);
