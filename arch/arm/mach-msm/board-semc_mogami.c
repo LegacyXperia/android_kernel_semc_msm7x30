@@ -85,6 +85,10 @@
 
 #include "keypad-semc.h"
 
+#if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
+#include <linux/lm356x.h>
+#endif
+
 #define MSM_PMEM_SF_SIZE	0x1700000
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 3) /* 4bpp * 3 Pages */
@@ -96,6 +100,10 @@
  * res V4L2 video overlay - i.e. 1280x720x1.5x2
  */
 #define MSM_V4L2_VIDEO_OVERLAY_BUF_SIZE 2764800
+
+#if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
+#define LM356X_HW_RESET_GPIO 2
+#endif
 
 #define MSM_FB_EXT_BUF_SIZE    0
 
@@ -1930,7 +1938,85 @@ static struct platform_device android_usb_device = {
 };
 #endif
 
+#if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
+int lm356x_request_gpio_pins(void)
+{
+	int result;
+
+	result = gpio_request(LM356X_HW_RESET_GPIO, "LM356X hw reset");
+	if (result)
+		return result;
+
+	gpio_set_value(LM356X_HW_RESET_GPIO, 1);
+
+	udelay(20);
+	return result;
+}
+
+int lm356x_release_gpio_pins(void)
+{
+
+	gpio_set_value(LM356X_HW_RESET_GPIO, 0);
+	gpio_free(LM356X_HW_RESET_GPIO);
+
+	return 0;
+}
+#endif
+
+#ifdef CONFIG_LM3560
+static struct lm356x_platform_data lm3560_platform_data = {
+	.hw_enable              = lm356x_request_gpio_pins,
+	.hw_disable             = lm356x_release_gpio_pins,
+	.led_nums		= 2,
+	.strobe_trigger		= LM356X_STROBE_TRIGGER_EDGE,
+	.privacy_terminate	= LM356X_PRIVACY_MODE_TURN_BACK,
+	.privacy_led_nums	= 1,
+	.privacy_blink_period	= 0, /* No bliking */
+	.current_limit		= 2300000, /* uA */
+	.flash_sync		= LM356X_SYNC_OFF,
+	.strobe_polarity	= LM356X_STROBE_POLARITY_HIGH,
+	.ledintc_pin_setting	= LM356X_LEDINTC_NTC_THERMISTOR_INPUT,
+	.tx1_polarity		= LM356X_TX1_POLARITY_HIGH,
+	.tx2_polarity		= LM356X_TX2_POLARITY_HIGH,
+	.hw_torch_mode		= LM356X_HW_TORCH_MODE_DISABLE,
+};
+#endif
+#ifdef CONFIG_LM3561
+static struct lm356x_platform_data lm3561_platform_data = {
+	.hw_enable              = lm356x_request_gpio_pins,
+	.hw_disable             = lm356x_release_gpio_pins,
+	.led_nums		= 1,
+	.strobe_trigger		= LM356X_STROBE_TRIGGER_EDGE,
+	.privacy_terminate	= LM356X_PRIVACY_MODE_TURN_BACK,
+	.privacy_led_nums	= 0,
+	.privacy_blink_period	= 0, /* No bliking */
+	.current_limit		= 1000000, /* uA
+				   selectable value are 1500mA or 1000mA.
+				   if set other value,
+				   it assume current limit is 1000mA.
+				*/
+	.flash_sync		= LM356X_SYNC_OFF,
+	.strobe_polarity	= LM356X_STROBE_POLARITY_HIGH,
+	.ledintc_pin_setting	= LM356X_LEDINTC_NTC_THERMISTOR_INPUT,
+	.tx1_polarity		= LM356X_TX1_POLARITY_HIGH,
+	.tx2_polarity		= LM356X_TX2_POLARITY_HIGH,
+	.hw_torch_mode		= LM356X_HW_TORCH_MODE_DISABLE,
+};
+#endif
+
 static struct i2c_board_info msm_i2c_board_info[] = {
+#ifdef CONFIG_LM3560
+	{
+		I2C_BOARD_INFO("lm3560", 0xA6 >> 1),
+		.platform_data = &lm3560_platform_data,
+	},
+#endif
+#ifdef CONFIG_LM3561
+	{
+		I2C_BOARD_INFO("lm3561", 0xA6 >> 1),
+		.platform_data = &lm3561_platform_data,
+	},
+#endif
 };
 
 static struct i2c_board_info msm_marimba_board_info[] = {
