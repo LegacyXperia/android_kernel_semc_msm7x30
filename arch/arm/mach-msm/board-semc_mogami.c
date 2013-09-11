@@ -176,8 +176,6 @@ static struct platform_device ion_dev;
 #define PM8058_MPP_BASE			   PM8058_GPIO_PM_TO_SYS(PM8058_GPIOS)
 #define PM8058_MPP_PM_TO_SYS(pm_gpio)	   (pm_gpio + PM8058_MPP_BASE)
 
-#define PMIC_GPIO_WLAN_EXT_POR  22 /* PMIC GPIO NUMBER 23 */
-
 #define DDR0_BANK_BASE PHYS_OFFSET
 #define DDR0_BANK_SIZE 0X03C00000
 #define DDR1_BANK_BASE 0x07000000
@@ -261,19 +259,6 @@ static int pm8058_gpios_init(void)
 			.out_strength   = PM_GPIO_STRENGTH_LOW,
 			.output_value   = 0,
 		},
-	};
-
-	struct pm8xxx_gpio_init_info gpio23 = {
-		PM8058_GPIO_PM_TO_SYS(PMIC_GPIO_WLAN_EXT_POR),
-		{
-			.direction      = PM_GPIO_DIR_OUT,
-			.output_buffer  = PM_GPIO_OUT_BUF_CMOS,
-			.output_value   = 0,
-			.pull           = PM_GPIO_PULL_NO,
-			.vin_sel        = 2,
-			.out_strength   = PM_GPIO_STRENGTH_LOW,
-			.function       = PM_GPIO_FUNC_NORMAL,
-		}
 	};
 
 	struct pm8xxx_gpio_init_info sdcc_det = {
