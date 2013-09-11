@@ -10,12 +10,14 @@
  * of the License, or (at your option) any later version.
  */
 
+#include <linux/slab.h>
 #include <linux/ctype.h>
 #include <linux/err.h>
 #include <linux/kernel.h>
 #include <linux/platform_device.h>
 #include <linux/power_supply.h>
 #include <linux/stat.h>
+#include <linux/module.h>
 
 #include <mach/oem_rapi_client.h>
 #include <mach/semc_battery_data.h>
