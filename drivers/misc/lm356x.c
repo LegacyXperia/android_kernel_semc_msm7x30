@@ -17,6 +17,7 @@
 #include <linux/delay.h>
 #include <linux/lm356x.h>
 #include <linux/kernel.h>
+#include <linux/slab.h>
 
 /*
  ******************************************************************************
