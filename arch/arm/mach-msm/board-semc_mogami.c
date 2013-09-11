@@ -85,6 +85,10 @@
 #if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
 #include <linux/lm356x.h>
 #endif
+#ifdef CONFIG_LEDS_AS3676
+#include <linux/leds-as3676.h>
+#include "leds-semc.h"
+#endif
 
 #if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
 #define LM356X_HW_RESET_GPIO		2
@@ -1240,6 +1244,13 @@ static struct lm356x_platform_data lm3561_platform_data = {
 #endif
 
 static struct i2c_board_info msm_i2c_board_info[] = {
+#ifdef CONFIG_LEDS_AS3676
+	{
+		/* Config-spec is 8-bit = 0x80, src-code need 7-bit => 0x40 */
+		I2C_BOARD_INFO("as3676", 0x80 >> 1),
+		.platform_data = &as3676_platform_data,
+	},
+#endif
 #ifdef CONFIG_LM3560
 	{
 		I2C_BOARD_INFO("lm3560", 0xA6 >> 1),
