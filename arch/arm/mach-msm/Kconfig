@@ -2519,6 +2519,12 @@ config MSM_OCMEM_POWER_DISABLE
 	  never allowing them to be turned OFF. Both local power
 	  management and RPM assisted power modes are supported.
 
+config SEMC_CHARGER_USB_ARCH
+	bool "Support USB interface for charger"
+	default n
+	help
+	  This enables USB interface for charger.
+
 config MSM_RTB
 	bool "Register tracing"
 	help
