@@ -9,6 +9,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
+ * Adapted for SEMC 2011 devices by Michael Bestas (mikeioannina@gmail.com)
  */
 
 #include <linux/kernel.h>
@@ -117,6 +118,22 @@
 #include "leds-semc.h"
 #endif
 
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+#include <mach/mddi_novatek_fwvga.h>
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_SONY_HVGA
+#include <linux/mddi_sony_s6d05a1_hvga.h>
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_HITACHI_HVGA
+#include <linux/mddi_hitachi_r61529_hvga.h>
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_SII_HVGA
+#include <linux/mddi_sii_r61529_hvga.h>
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_AUO_HVGA
+#include <linux/mddi_auo_s6d05a1_hvga.h>
+#endif
+
 #define MSM_PMEM_SF_SIZE	0x1700000
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 3) /* 4bpp * 3 Pages */
@@ -141,6 +158,19 @@
 #if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
 #define LM356X_HW_RESET_GPIO 2
 #endif
+
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+#define NOVATEK_GPIO_RESET		157
+#endif
+
+#if defined(CONFIG_FB_MSM_MDDI_SONY_HVGA) || \
+	defined(CONFIG_FB_MSM_MDDI_HITACHI_HVGA) || \
+	defined(CONFIG_FB_MSM_MDDI_SII_HVGA) || \
+	defined(CONFIG_FB_MSM_MDDI_AUO_HVGA)
+#define GPIO_MSM_MDDI_XRES		157
+#endif
+
+#define LCD_VDD_VOLTAGE 2850000
 
 #define MSM_FB_EXT_BUF_SIZE    0
 
@@ -359,7 +389,51 @@ static struct msm_ssbi_platform_data msm7x30_ssbi_pm8058_pdata = {
 };
 #endif
 
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+static const struct panel_id *novatek_panels[] = {
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_SHARP_LS040T8LX01
+	&novatek_panel_id_sharp_ls040t8lx01_rev_c,
+	&novatek_panel_id_sharp_ls040t8lx01_rev_d,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_SHARP_LS042T3LX
+	&novatek_panel_id_sharp_ls042t3lx_type1,
+	&novatek_panel_id_sharp_ls042t3lx,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_SONY_ACX424AKM
+	&novatek_panel_id_sony_acx424akm_type1,
+	&novatek_panel_id_sony_acx424akm,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_SONY_ACX427AK
+	&novatek_panel_id_sony_acx427ak,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_SONY_ACX424AK
+	&novatek_panel_id_sony_acx424ak,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_HITACHI_DX09D09VM
+	&novatek_panel_id_hitachi_dx09d09vm_type1,
+	&novatek_panel_id_hitachi_dx09d09vm,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_SHARP_LS033T3LX01
+	&novatek_panel_id_sharp_ls033t3lx01,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_TMD_LT033MDV1000
+	&novatek_panel_id_tmd_lt033mdv1000,
+#endif
+};
+
+struct novatek_i2c_pdata novatek_i2c_pdata = {
+	.panels = novatek_panels,
+};
+#endif
+
 static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+	{
+		I2C_BOARD_INFO(MDDI_NOVATEK_I2C_NAME, 0x98 >> 1),
+		.type = MDDI_NOVATEK_I2C_NAME,
+		.platform_data = &novatek_i2c_pdata,
+	},
+#endif
 };
 
 #ifdef CONFIG_MSM_CAMERA
@@ -1535,6 +1609,232 @@ static struct platform_device android_usb_device = {
 };
 #endif
 
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+static int novatek_reset(void)
+{
+	msleep(10);
+	gpio_set_value(NOVATEK_GPIO_RESET, 1);
+	msleep(5); /* hw spec says: 2 ms */
+	gpio_set_value(NOVATEK_GPIO_RESET, 0);
+	msleep(5); /* hw spec says: 2 ms */
+	gpio_set_value(NOVATEK_GPIO_RESET, 1);
+	msleep(30); /* hw spec says: 20 ms */
+	return 0;
+}
+
+static struct novatek_fwvga_platform_data novatek_platform_data = {
+	.power = NULL,
+	.reset = novatek_reset,
+};
+
+static struct platform_device novatek_device = {
+	.name	= MDDI_NOVATEK_FWVGA_NAME,
+	.id	= -1,
+	.dev	= {
+		.platform_data = &novatek_platform_data,
+	}
+};
+#endif
+
+#if defined(CONFIG_FB_MSM_MDDI_SONY_HVGA) || \
+	defined(CONFIG_FB_MSM_MDDI_HITACHI_HVGA) || \
+	defined(CONFIG_FB_MSM_MDDI_SII_HVGA) || \
+	defined(CONFIG_FB_MSM_MDDI_AUO_HVGA)
+/*  Generic LCD Regulators On function for SEMC mogami displays */
+static void semc_mogami_lcd_regulators_on(void)
+{
+	vreg_helper("gp7", 1800000, 1);  /* L8 */
+	vreg_helper("gp6", LCD_VDD_VOLTAGE, 1);  /* L15 */
+}
+
+/* Generic Power On function for SEMC mogami displays */
+static void semc_mogami_lcd_power_on(u8 delay1, u8 delay2, u8 delay3)
+{
+	gpio_tlmm_config(GPIO_CFG(GPIO_MSM_MDDI_XRES,
+			0,
+			GPIO_CFG_OUTPUT,
+			GPIO_CFG_NO_PULL,
+			GPIO_CFG_2MA),
+			GPIO_CFG_ENABLE );
+	gpio_set_value(GPIO_MSM_MDDI_XRES,0);
+	semc_mogami_lcd_regulators_on();
+	mdelay(delay1);
+	gpio_set_value(GPIO_MSM_MDDI_XRES,0);
+	mdelay(delay2);
+	gpio_set_value(GPIO_MSM_MDDI_XRES,1);
+	mdelay(delay3);
+}
+#endif  /* (CONFIG_FB_MSM_MDDI_SONY_HVGA) ||
+	(CONFIG_FB_MSM_MDDI_HITACHI_HVGA) ||
+	(CONFIG_FB_MSM_MDDI_SII_HVGA) ||
+	(CONFIG_FB_MSM_MDDI_AUO_HVGA)*/
+
+#ifdef CONFIG_FB_MSM_MDDI_SONY_HVGA
+static void sony_hvga_lcd_power_on(void)
+{
+	semc_mogami_lcd_regulators_on();
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 1);
+	msleep(11);     /* spec: > 10ms */
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	msleep(2);      /* spec: > 1ms */
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 1);
+	msleep(21);     /* spec: > 20ms */
+}
+
+static void sony_hvga_lcd_power_off(void)
+{
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	msleep(121);    /* spec: > 120ms */
+	vreg_helper("gp7", 1800000, 0);  /* L8 */
+	vreg_helper("gp6", LCD_VDD_VOLTAGE, 0);  /* L15 */
+}
+
+static void sony_hvga_lcd_exit_deep_standby(void)
+{
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	msleep(4);      /* spec: > 3ms */
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 1);
+	msleep(11);     /* spec: > 10ms */
+}
+
+static struct sony_hvga_platform_data sony_hvga_panel_ext = {
+	.power_on = sony_hvga_lcd_power_on,
+	.power_off = sony_hvga_lcd_power_off,
+	.exit_deep_standby = sony_hvga_lcd_exit_deep_standby,
+};
+
+static struct platform_device mddi_sony_hvga_display_device = {
+	.name = MDDI_SONY_S6D05A1_HVGA_NAME,
+	.id = -1,
+	.dev = {
+		.platform_data = &sony_hvga_panel_ext,
+	}
+};
+#endif /* CONFIG_FB_MSM_MDDI_SONY_HVGA */
+
+#ifdef CONFIG_FB_MSM_MDDI_HITACHI_HVGA
+static void hitachi_hvga_lcd_power_on(void)
+{
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	semc_mogami_lcd_regulators_on();
+	msleep(1);      /* spec: > 310us */
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 1);
+	msleep(11);     /* spec: > 10ms */
+}
+
+static void hitachi_hvga_lcd_power_off(void)
+{
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	msleep(121);    /* spec: > 120ms */
+	vreg_helper("gp7", 1800000, 0);  /* L8 */
+	vreg_helper("gp6", LCD_VDD_VOLTAGE, 0);  /* L15 */
+}
+
+static void hitachi_hvga_lcd_exit_deep_standby(void)
+{
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	msleep(2);      /* spec: > 1ms */
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 1);
+	msleep(6);      /* spec: > 5ms */
+}
+
+static struct hitachi_hvga_platform_data hitachi_hvga_panel_ext = {
+	.power_on = hitachi_hvga_lcd_power_on,
+	.power_off = hitachi_hvga_lcd_power_off,
+	.exit_deep_standby = hitachi_hvga_lcd_exit_deep_standby,
+};
+
+static struct platform_device mddi_hitachi_hvga_display_device = {
+	.name = MDDI_HITACH_R61529_HVGA_NAME,
+	.id = -1,
+	.dev = {
+		.platform_data = &hitachi_hvga_panel_ext,
+	}
+};
+#endif /* CONFIG_FB_MSM_MDDI_HITACHI_HVGA */
+
+#ifdef CONFIG_FB_MSM_MDDI_SII_HVGA
+static void sii_hvga_lcd_power_on(void)
+{
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	semc_mogami_lcd_regulators_on();
+	msleep(1);      /* spec: > 310us */
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 1);
+	msleep(11);     /* spec: > 10ms */
+}
+
+static void sii_hvga_lcd_power_off(void)
+{
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	msleep(121);    /* spec: > 120ms */
+	vreg_helper("gp7", 1800000, 0);  /* L8 */
+	vreg_helper("gp6", LCD_VDD_VOLTAGE, 0);  /* L15 */
+}
+
+static void sii_hvga_lcd_exit_deep_standby(void)
+{
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	msleep(2);      /* spec: > 1ms */
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 1);
+	msleep(6);      /* spec: > 5ms */
+}
+
+static struct sii_hvga_platform_data sii_hvga_panel_ext = {
+	.power_on = sii_hvga_lcd_power_on,
+	.power_off = sii_hvga_lcd_power_off,
+	.exit_deep_standby = sii_hvga_lcd_exit_deep_standby,
+};
+
+static struct platform_device mddi_sii_hvga_display_device = {
+	.name = MDDI_SII_R61529_HVGA_NAME,
+	.id = -1,
+	.dev = {
+		.platform_data = &sii_hvga_panel_ext,
+	}
+};
+#endif /* CONFIG_FB_MSM_MDDI_SII_HVGA */
+
+#ifdef CONFIG_FB_MSM_MDDI_AUO_HVGA
+static void auo_hvga_lcd_power_on(void)
+{
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	semc_mogami_lcd_regulators_on();
+	msleep(2);      /* spec: > 1ms */
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 1);
+	msleep(51);     /* spec: > 50ms */
+}
+
+static void auo_hvga_lcd_power_off(void)
+{
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	msleep(121);    /* spec: > 120ms */
+	vreg_helper("gp7", 1800000, 0);  /* L8 */
+	vreg_helper("gp6", LCD_VDD_VOLTAGE, 0);  /* L15 */
+}
+
+static void auo_hvga_lcd_exit_deep_standby(void)
+{
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 0);
+	msleep(2);      /* spec: > 1ms */
+	gpio_set_value(GPIO_MSM_MDDI_XRES, 1);
+	msleep(51);     /* spec: > 50ms */
+}
+
+static struct auo_hvga_platform_data auo_hvga_panel_ext = {
+	.power_on = auo_hvga_lcd_power_on,
+	.power_off = auo_hvga_lcd_power_off,
+	.exit_deep_standby = auo_hvga_lcd_exit_deep_standby,
+};
+
+static struct platform_device mddi_auo_hvga_display_device = {
+	.name = MDDI_AUO_S6D05A1_HVGA_NAME,
+	.id = -1,
+	.dev = {
+		.platform_data = &auo_hvga_panel_ext,
+	}
+};
+#endif /* CONFIG_FB_MSM_MDDI_AUO_HVGA */
+
 #ifdef CONFIG_SEMC_CHARGER_USB_ARCH
 static char *semc_chg_usb_supplied_to[] = {
 	BATTERY_CHARGALG_NAME,
@@ -2643,6 +2943,21 @@ static struct platform_device *devices[] __initdata = {
 #if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
 	&msm_device_tsif,
 #endif
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+	&novatek_device,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_SONY_HVGA
+	&mddi_sony_hvga_display_device,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_HITACHI_HVGA
+	&mddi_hitachi_hvga_display_device,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_SII_HVGA
+	&mddi_sii_hvga_display_device,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_AUO_HVGA
+	&mddi_auo_hvga_display_device,
+#endif
 
 #if defined(CONFIG_CRYPTO_DEV_QCRYPTO) || \
 		defined(CONFIG_CRYPTO_DEV_QCRYPTO_MODULE)
@@ -3118,6 +3433,14 @@ out3:
 
 }
 
+static void __init shared_vreg_on(void)
+{
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+	vreg_helper("gp6", LCD_VDD_VOLTAGE, 1);  /* ldo15 - LCD */
+#endif
+	vreg_helper("gp7", 1800000, 1);  /* ldo08 - BMA150, AK8975B, LCD, Touch, HDMI */
+}
+
 static void __init msm7x30_init_nand(void)
 {
 	char *build_id;
@@ -3274,6 +3597,7 @@ static void __init msm7x30_init(void)
 	snddev_hsed_voltage_init();
 	aux_pcm_gpio_init();
 #endif
+	shared_vreg_on();
 
 	i2c_register_board_info(0, msm_i2c_board_info,
 			ARRAY_SIZE(msm_i2c_board_info));
@@ -3289,6 +3613,15 @@ static void __init msm7x30_init(void)
 #endif
 
 	pm8058_gpios_init();
+
+#if defined(CONFIG_FB_MSM_MDDI_SONY_HVGA) || \
+	defined(CONFIG_FB_MSM_MDDI_HITACHI_HVGA) || \
+	defined(CONFIG_FB_MSM_MDDI_SII_HVGA)
+	semc_mogami_lcd_power_on(11, 2, 21);
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_AUO_HVGA
+	semc_mogami_lcd_power_on(2, 21, 51);
+#endif
 
 	boot_reason = *(unsigned int *)
 		(smem_get_entry(SMEM_POWER_ON_STATUS_INFO, &smem_size));
