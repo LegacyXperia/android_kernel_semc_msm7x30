@@ -3,7 +3,7 @@
 
 #define MDDI_AUO_S6D05A1_HVGA_NAME "mddi_auo_s6d05a1_hvga"
 
-#include <linux/msm_fb_panel.h>
+#include "../../drivers/video/msm/msm_fb_panel.h"
 
 enum {
 	DBC_MODE_UI,
