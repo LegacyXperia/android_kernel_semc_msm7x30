@@ -450,9 +450,8 @@ config FB_MSM_WRITEBACK_MSM_PANEL
         bool "MDP overlay write back panel enable"
 	---help---
 	  Support for MDP4 OVERLAY write back mode
-choice
-	prompt "LCD Panel"
-	default FB_MSM_MDDI_AUTO_DETECT
+
+menu "LCD Panel"
 
 config FB_MSM_LCDC_PRISM_WVGA_PANEL
 	depends on FB_MSM_LCDC_HW
@@ -669,6 +668,32 @@ config FB_MSM_MDDI_TOSHIBA_WVGA
 	---help---
 	  Support for MDDI Toshiba (800x480) WVGA panel
 
+config FB_MSM_MDDI_SONY_HVGA
+	bool "MDDI Sony HVGA Panel"
+	select FB_MSM_MDDI
+	---help---
+	  Support for MDDI Sony HVGA (320x480) panel
+
+config FB_MSM_MDDI_HITACHI_HVGA
+	bool "MDDI Hitachi HVGA Panel"
+	select FB_MSM_MDDI
+	---help---
+	  Support for MDDI Hitachi HVGA (320x480) panel
+
+config FB_MSM_MDDI_SII_HVGA
+	bool "MDDI Sii HVGA Panel"
+	select FB_MSM_MDDI
+	default n
+	---help---
+	  Support for MDDI Sii HVGA (320x480) panel
+
+config FB_MSM_MDDI_AUO_HVGA
+	bool "MDDI Auo HVGA Panel"
+	select FB_MSM_MDDI
+	default n
+	---help---
+	  Support for MDDI Auo HVGA (320x480) panel
+
 config FB_MSM_MDDI_SHARP_QVGA_128x128
 	bool "MDDI Sharp QVGA Dual Panel"
 	select FB_MSM_MDDI
@@ -781,7 +806,7 @@ config FB_MSM_PANEL_NONE
 	bool "NONE"
 	---help---
 	  This will disable LCD panel
-endchoice
+endmenu
 
 config LGIT_VIDEO_WXGA_CABC
 	bool "Content Adaptive Backlight Control on LGIT WXGA Panel"
