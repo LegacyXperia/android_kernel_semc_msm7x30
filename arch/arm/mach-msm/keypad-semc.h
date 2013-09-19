@@ -13,7 +13,12 @@
 #define _KEYPAD_SEMC_H
 
 #define PM8058_GPIO_PM_TO_SYS(pm_gpio)	(pm_gpio + NR_GPIO_IRQS)
+#define PM8058_IRQ_BASE			(NR_MSM_IRQS + NR_GPIO_IRQS)
 
 extern struct pm8xxx_keypad_platform_data pm8xxx_keypad_data;
+
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+extern struct keypad_pmic_platform_data pmic_keypad_data;
+#endif
 
 #endif
