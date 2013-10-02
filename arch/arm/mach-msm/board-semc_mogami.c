@@ -3476,7 +3476,7 @@ static uint32_t wifi_setup_power(struct device *dv, unsigned int vdd)
 }
 
 static struct mmc_platform_data msm7x30_sdc3_data = {
-	.ocr_mask	= MMC_VDD_27_28 | MMC_VDD_28_29,
+	.ocr_mask	= MMC_VDD_165_195, /* 1.8v */
 	.translate_vdd	= wifi_setup_power,
 	.mmc_bus_width  = MMC_CAP_4_BIT_DATA | MMC_CAP_POWER_OFF_CARD,
 	.sdiowakeup_irq = MSM_GPIO_TO_INT(118),
