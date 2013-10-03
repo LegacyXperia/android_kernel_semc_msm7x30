@@ -1651,6 +1651,15 @@ config MSM_RPCSERVER_HANDSET
 	  Support for receiving handset events like headset detect,
 	  headset switch and clamshell state.
 
+config SEMC_RPC_SERVER_HANDSET
+	bool "Enable SEMC handset rpc dispatcher"
+	depends on ARCH_MSM7X30 && MSM_ONCRPCROUTER && !MSM_RPCSERVER_HANDSET
+	default y
+	help
+	 This enables the SEMC version of rpc_server_handset message dispatcher.
+	 This cannot cooperate with MSM_RPCSERVER_HANDSET. If this is set,
+	 an error will be generated.
+
 config MSM_RMT_STORAGE_CLIENT
 	depends on (ARCH_MSM && MSM_ONCRPCROUTER)
 	default n
