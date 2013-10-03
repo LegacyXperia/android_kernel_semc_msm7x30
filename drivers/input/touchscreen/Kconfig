@@ -1008,4 +1008,17 @@ config TOUCHSCREEN_SYNAPTICS_DSX_FW_UPDATE
 	  To compile this driver as a module, choose M here: the
 	  module will be called synaptics_dsx_fw_update.
 
+config TOUCHSCREEN_CY8CTMA300_SPI
+	default n
+	depends on SPI_MASTER
+	tristate "Cypress CY8CTMA300 spi touchscreen"
+	help
+	  Say Y here if you have a Cypress CY8CTMA300 touchscreen
+	  connected to your system's spi bus.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called cy8ctma300_spi.
+
 endif
