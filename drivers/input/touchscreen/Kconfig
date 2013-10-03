@@ -1008,6 +1008,20 @@ config TOUCHSCREEN_SYNAPTICS_DSX_FW_UPDATE
 	  To compile this driver as a module, choose M here: the
 	  module will be called synaptics_dsx_fw_update.
 
+config TOUCHSCREEN_CLEARPAD
+	tristate "Synaptics ClearPad"
+	default n
+	help
+	  Say Y here to enable Synaptics ClearPad touchscreen.
+
+config TOUCHSCREEN_CLEARPAD_I2C
+	tristate "Synaptics ClearPad I2C"
+	depends on I2C
+	depends on TOUCHSCREEN_CLEARPAD
+	default n
+	help
+	  Say Y here to enable Synaptics ClearPad I2C touchscreen.
+
 config TOUCHSCREEN_CY8CTMA300_SPI
 	default n
 	depends on SPI_MASTER
