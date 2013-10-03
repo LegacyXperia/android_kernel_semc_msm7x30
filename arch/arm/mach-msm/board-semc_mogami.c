@@ -2388,16 +2388,7 @@ static struct msm_usb_host_platform_data msm_usb_host_pdata = {
 static struct regulator *vreg_3p3;
 static int msm_hsusb_ldo_init(int init)
 {
-	uint32_t version = 0;
 	int def_vol = 3400000;
-
-	version = socinfo_get_version();
-
-	if (SOCINFO_VERSION_MAJOR(version) >= 2 &&
-			SOCINFO_VERSION_MINOR(version) >= 1) {
-		def_vol = 3075000;
-		pr_debug("%s: default voltage:%d\n", __func__, def_vol);
-	}
 
 	if (init) {
 		vreg_3p3 = regulator_get(NULL, "usb");
@@ -3528,9 +3519,6 @@ static struct msm_spm_platform_data msm_spm_data __initdata = {
 static void __init msm7x30_init(void)
 {
 	unsigned smem_size;
-	uint32_t soc_version = 0;
-
-	soc_version = socinfo_get_version();
 
 	wlan_init_seq();
 
@@ -3542,12 +3530,6 @@ static void __init msm7x30_init(void)
 	platform_device_register(&msm7x30_device_acpuclk);
 
 #ifdef CONFIG_USB_MSM_OTG_72K
-	if (SOCINFO_VERSION_MAJOR(soc_version) >= 2 &&
-			SOCINFO_VERSION_MINOR(soc_version) >= 1) {
-		pr_debug("%s: SOC Version:2.(1 or more)\n", __func__);
-		msm_otg_pdata.ldo_set_voltage = 0;
-	}
-
 	msm_device_otg.dev.platform_data = &msm_otg_pdata;
 #ifdef CONFIG_USB_GADGET
 	msm_otg_pdata.swfi_latency =
