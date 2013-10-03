@@ -1546,6 +1546,7 @@ static int cyttsp_power_on(struct cyttsp *ts)
 {
 	int retval;
 	int counter = 5;
+	u8 gesture_setup;
 
 again:
 	dev_vdbg(ts->pdev, "%s: trying ...\n", __func__);
@@ -1586,9 +1587,9 @@ again:
 		goto to_bl_mode;
 
 	/* init gesture setup */
+#ifndef CONFIG_MACH_SEMC_IYOKAN
 	if (ts->platform_data->use_gestures) {
-		u8 gesture_setup;
-
+#endif
 		DBG(printk(KERN_INFO"%s: Init gesture setup\n", __func__);)
 		retval = ttsp_read_block_data(ts, CY_REG_GEST_SET,
 				sizeof(gesture_setup), &gesture_setup);
@@ -1608,7 +1609,9 @@ again:
 		if (retval)
 			goto err_gestures;
 		msleep(CY_DELAY_DFLT);
+#ifndef CONFIG_MACH_SEMC_IYOKAN
 	}
+#endif
 	goto done;
 
 err_gestures:
