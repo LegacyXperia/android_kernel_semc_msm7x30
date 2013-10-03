@@ -20,9 +20,10 @@
 #include <linux/delay.h>
 #include <linux/irq.h>
 #include <linux/input.h>
+#include <linux/slab.h>
 #include <asm/atomic.h>
 #include <linux/bitops.h>
-#include <mach/gpio.h>
+#include <linux/gpio.h>
 #include <mach/pmic.h>
 #include <linux/mfd/marimba.h>
 #include <mach/vreg.h>
@@ -46,7 +47,7 @@
 /* Add all includes specifically required by the adaptor here */
 #endif
 
-#include "proc_comm.h"
+#include <mach/proc_comm.h>
 #include <linux/simple_remote.h>
 #include <mach/simple_remote_msm7x30_pf.h>
 
