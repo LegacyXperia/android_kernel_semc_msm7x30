@@ -389,6 +389,7 @@ endif
 
 obj-$(CONFIG_SEMC_CHARGER_USB_ARCH) += semc_charger_usb.o
 obj-$(CONFIG_BATTERY_SEMC_ARCH) += semc_battery_data.o
+obj-$(CONFIG_SIMPLE_REMOTE_PLATFORM) += simple_remote_msm7x30_pf.o
 
 obj-$(CONFIG_ARCH_MSM8960) += mdm2.o mdm_common.o
 obj-$(CONFIG_MSM_RTB) += msm_rtb.o
