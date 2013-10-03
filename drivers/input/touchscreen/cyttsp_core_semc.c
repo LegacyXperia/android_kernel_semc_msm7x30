@@ -24,6 +24,7 @@
  *
  * Contact Cypress Semiconductor at www.cypress.com
  *
+ * Adapted for SEMC 2011 devices by Vassilis Tsogkas (tsogkas@ceid.upatras.gr)
  */
 
 #include <linux/delay.h>
@@ -41,6 +42,7 @@
 #include <linux/input/cyttsp_semc.h>
 #include <linux/ctype.h>
 #include "cyttsp_core_semc.h"
+#include <linux/sched.h>
 
 #define DBG(x)
 
@@ -258,6 +260,7 @@ enum mfg_command_status {
 };
 
 static const u8 CY_MFG_CMD_CLR_STATUS[] = {0x2f};
+static int bootloader_mode_done;
 
 /* TTSP Bootloader Register Map interface definition */
 #define CY_BL_CHKSUM_OK 0x01
@@ -1506,6 +1509,7 @@ static int cyttsp_set_bl_mode(struct cyttsp *ts)
 {
 	int retval;
 	u8 cmd = CY_SOFT_RESET_MODE;
+	bootloader_mode_done = 0;
 
 	dev_vdbg(ts->pdev, "%s.\n", __func__);
 
@@ -1534,6 +1538,7 @@ static int cyttsp_set_bl_mode(struct cyttsp *ts)
 		return 0;
 	}
 	dev_err(ts->pdev, "%s: failed.\n", __func__);
+	bootloader_mode_done = 1;
 	return -EAGAIN;
 }
 
@@ -1646,7 +1651,7 @@ static void cyttsp_reset_worker(struct work_struct *work)
 		goto reserve_next;
 	}
 
-	if (GET_BOOTLOADERMODE(xy_mode.tt_mode)) {
+	if (GET_BOOTLOADERMODE(xy_mode.tt_mode) && bootloader_mode_done == 1) {
 		atomic_set(&ts->mode, MODE_BL_IDLE);
 		(void)cyttsp_exit_bl_mode(ts);
 	}
@@ -1787,7 +1792,7 @@ static bool is_ttsp_fwwr_done(struct cyttsp *ts)
 			!(ts->bl_data.bl_error & ~CY_BL_RECEPTIVE);
 }
 
-static ssize_t firmware_write(struct kobject *kobj,
+static ssize_t firmware_write(struct file *ffile, struct kobject *kobj,
 				struct bin_attribute *bin_attr,
 				char *buf, loff_t pos, size_t size)
 {
@@ -1810,7 +1815,7 @@ static ssize_t firmware_write(struct kobject *kobj,
 	return -EAGAIN;
 }
 
-static ssize_t firmware_read(struct kobject *kobj,
+static ssize_t firmware_read(struct file *ffile, struct kobject *kobj,
 	struct bin_attribute *ba,
 	char *buf, loff_t pos, size_t size)
 {
