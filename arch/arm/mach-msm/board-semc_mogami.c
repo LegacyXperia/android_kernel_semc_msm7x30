@@ -150,6 +150,9 @@
 #ifdef CONFIG_TOUCHSCREEN_CY8CTMA300_SPI
 #include <linux/spi/cy8ctma300_touch.h>
 #endif
+#ifdef CONFIG_TOUCHSCREEN_CLEARPAD
+#include <linux/clearpad.h>
+#endif
 
 #ifdef CONFIG_CHARGER_BQ24185
 #define BQ24185_GPIO_IRQ		31
@@ -187,6 +190,9 @@
 #define CYPRESS_TOUCH_GPIO_RESET	40
 #define CYPRESS_TOUCH_GPIO_IRQ		42
 #define CYPRESS_TOUCH_GPIO_SPI_CS	46
+#endif
+#ifdef CONFIG_TOUCHSCREEN_CLEARPAD
+#define SYNAPTICS_TOUCH_GPIO_IRQ	42
 #endif
 
 #define TOUCH_VDD_VOLTAGE 3050000
@@ -2074,6 +2080,62 @@ static struct cypress_touch_platform_data cypress_touch_data = {
 
 #endif /* CONFIG_TOUCHSCREEN_CY8CTMA300_SPI */
 
+#ifdef CONFIG_TOUCHSCREEN_CLEARPAD
+static int clearpad_vreg_configure(int enable)
+{
+	int rc = 0;
+
+	rc = vreg_helper("gp13", TOUCH_VDD_VOLTAGE, enable);
+
+	return rc;
+}
+
+static struct msm_gpio clearpad_gpio_config_data[] = {
+	{ GPIO_CFG(SYNAPTICS_TOUCH_GPIO_IRQ, 0, GPIO_CFG_INPUT,
+		   GPIO_CFG_PULL_UP, GPIO_CFG_2MA), "clearpad3000_irq" },
+};
+
+static int clearpad_gpio_configure(int enable)
+{
+	int rc = 0;
+
+	if (enable)
+		rc = msm_gpios_request_enable(clearpad_gpio_config_data,
+				ARRAY_SIZE(clearpad_gpio_config_data));
+	else
+		msm_gpios_free(clearpad_gpio_config_data,
+				ARRAY_SIZE(clearpad_gpio_config_data));
+	return rc;
+}
+
+static struct synaptics_button synaptics_menu_key = {
+	.type = EV_KEY,
+	.code = KEY_MENU,
+};
+
+static struct synaptics_button synaptics_back_key = {
+	.type = EV_KEY,
+	.code = KEY_BACK,
+};
+
+static struct synaptics_funcarea clearpad_funcarea_array[] = {
+	{ 0, 0, 479, 853, SYN_FUNCAREA_POINTER, NULL },
+	{ 0, 854, 479, 863, SYN_FUNCAREA_BOTTOM_EDGE, NULL},
+	{ 0, 884, 159, 921, SYN_FUNCAREA_BUTTON, &synaptics_back_key },
+	{ 0, 864, 179, 921, SYN_FUNCAREA_BTN_INBOUND, &synaptics_back_key },
+	{ 320, 884, 479, 921, SYN_FUNCAREA_BUTTON, &synaptics_menu_key },
+	{ 300, 864, 479, 921, SYN_FUNCAREA_BTN_INBOUND, &synaptics_menu_key },
+	{ .func = SYN_FUNCAREA_END }
+};
+
+static struct clearpad_platform_data clearpad_platform_data = {
+	.irq = MSM_GPIO_TO_INT(SYNAPTICS_TOUCH_GPIO_IRQ),
+	.funcarea = clearpad_funcarea_array,
+	.vreg_configure = clearpad_vreg_configure,
+	.gpio_configure = clearpad_gpio_configure,
+};
+#endif
+
 #ifdef CONFIG_SEMC_CHARGER_USB_ARCH
 static char *semc_chg_usb_supplied_to[] = {
 	BATTERY_CHARGALG_NAME,
@@ -2396,6 +2458,12 @@ static struct akm8975_platform_data akm8975_platform_data = {
 #endif
 
 static struct i2c_board_info msm_i2c_board_info[] = {
+#ifdef CONFIG_TOUCHSCREEN_CLEARPAD_I2C
+	{
+		I2C_BOARD_INFO(CLEARPADI2C_NAME, 0x58 >> 1),
+		.platform_data = &clearpad_platform_data,
+	},
+#endif
 #ifdef CONFIG_LEDS_AS3676
 	{
 		/* Config-spec is 8-bit = 0x80, src-code need 7-bit => 0x40 */
@@ -3870,7 +3938,9 @@ out3:
 
 static void __init shared_vreg_on(void)
 {
+#ifndef CONFIG_TOUCHSCREEN_CLEARPAD
 	vreg_helper("gp13", TOUCH_VDD_VOLTAGE, 1); /* ldo20 - Touch */
+#endif
 	vreg_helper("gp4", 2600000, 1);  /* ldo10 - BMA150, AK8975B */
 #ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
 	vreg_helper("gp6", LCD_VDD_VOLTAGE, 1);  /* ldo15 - LCD */
