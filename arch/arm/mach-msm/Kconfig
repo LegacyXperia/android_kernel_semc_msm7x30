@@ -2735,4 +2735,20 @@ config MSM_7X30_OVERCLOCK
 
 	  If unsure, say 'N' here.
 
+config SIMPLE_REMOTE_PLATFORM
+	bool "Simple Remote platform specific driver"
+	default n
+	help
+	  Provides support for detecting 3.5mm audio jack, such as wired
+	  headset. This is the platform specific layer.
+
+config SIMPLE_REMOTE_INVERT_PLUG_DETECTION_STATE
+	bool "Invert state of plug detection"
+	depends on SIMPLE_REMOTE_PLATFORM
+	help
+	  This option enables to invert headphone plug detection state,
+	  currently the plug detection state was low state when headphone
+	  was inserted, but it is high state on some products, so that
+	  we need invert this state on these products.
+
 endif
