@@ -103,6 +103,9 @@
 #include <mach/semc_charger_usb.h>
 #endif
 
+#ifdef CONFIG_SENSORS_AKM8975
+#include <linux/i2c/akm8975.h>
+#endif
 #ifdef CONFIG_INPUT_BMA150_NG
 #include <linux/bma150_ng.h>
 #endif
@@ -141,6 +144,9 @@
 #define BQ24185_GPIO_IRQ		31
 #endif
 
+#ifdef CONFIG_SENSORS_AKM8975
+#define AKM8975_GPIO			92
+#endif
 #ifdef CONFIG_INPUT_BMA150_NG
 #define BMA150_GPIO			51
 #endif
@@ -1903,6 +1909,31 @@ static struct apds9702_platform_data apds9702_pdata = {
 };
 #endif
 
+#ifdef CONFIG_SENSORS_AKM8975
+static struct msm_gpio akm8975_gpio_config_data[] = {
+	{ GPIO_CFG(AKM8975_GPIO, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN,
+		GPIO_CFG_2MA), "akm8975_drdy_irq" },
+};
+
+static int akm8975_gpio_setup(void)
+{
+	return msm_gpios_request_enable(akm8975_gpio_config_data,
+			ARRAY_SIZE(akm8975_gpio_config_data));
+}
+
+static void akm8975_gpio_shutdown(void)
+{
+	msm_gpios_disable_free(akm8975_gpio_config_data,
+		ARRAY_SIZE(akm8975_gpio_config_data));
+
+}
+
+static struct akm8975_platform_data akm8975_platform_data = {
+	.setup = akm8975_gpio_setup,
+	.shutdown = akm8975_gpio_shutdown,
+};
+#endif
+
 static struct i2c_board_info msm_i2c_board_info[] = {
 #ifdef CONFIG_LEDS_AS3676
 	{
@@ -1952,6 +1983,13 @@ static struct i2c_board_info msm_i2c_board_info[] = {
 		I2C_BOARD_INFO(APDS9702_NAME, 0xA8 >> 1),
 		.platform_data = &apds9702_pdata,
 		.type = APDS9702_NAME,
+	},
+#endif
+#ifdef CONFIG_SENSORS_AKM8975
+	{
+		I2C_BOARD_INFO(AKM8975_I2C_NAME, 0x18 >> 1),
+		.irq = MSM_GPIO_TO_INT(AKM8975_GPIO),
+		.platform_data = &akm8975_platform_data,
 	},
 #endif
 #ifdef CONFIG_LM3560
