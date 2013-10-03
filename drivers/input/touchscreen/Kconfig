@@ -1035,4 +1035,38 @@ config TOUCHSCREEN_CY8CTMA300_SPI
 	  To compile this driver as a module, choose M here: the
 	  module will be called cy8ctma300_spi.
 
+config TOUCHSCREEN_CYTTSP_SPI_SEMC
+	tristate "Cypress TTSP spi touchscreen"
+	default n
+	depends on SPI_MASTER
+	help
+	  Say Y here if you have a Cypress TTSP touchscreen
+	  connected to your system's spi bus.
+
+	  If unsure, say N.
+
+	  To compile this driver as a module, choose M here: the
+	  module will be called cyttsp_spi.
+
+config TOUCHSCREEN_CYTTSP_CORE_SEMC
+	bool "Cypress TTSP touchscreen core"
+	default y
+	depends on TOUCHSCREEN_CYTTSP_SPI_SEMC
+	help
+	  Always activated for Cypress TTSP touchscreen
+
+config TOUCHSCREEN_CYTTSP_KEY
+	bool "Cypress TTSP touchkey"
+	default n
+	depends on TOUCHSCREEN_CYTTSP_CORE_SEMC
+	help
+	  Activated for Cypress TTSP touchkey function
+
+config TOUCHSCREEN_CYTTSP_CHARGER_MODE
+	bool "Cypress TTSP touch CHARGER MODE"
+	default n
+	depends on TOUCHSCREEN_CYTTSP_CORE_SEMC
+	help
+	  Activated for Cypress TTSP touch charger mode
+
 endif
