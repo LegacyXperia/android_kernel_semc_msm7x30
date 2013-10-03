@@ -1942,6 +1942,11 @@ static struct i2c_board_info msm_i2c_board_info[] = {
 		.platform_data = &bma250_platform_data,
 	},
 #endif
+#ifdef CONFIG_INPUT_BMP180
+	{
+		I2C_BOARD_INFO("bmp180", 0x77)
+	},
+#endif
 #ifdef CONFIG_INPUT_APDS9702
 	{
 		I2C_BOARD_INFO(APDS9702_NAME, 0xA8 >> 1),
