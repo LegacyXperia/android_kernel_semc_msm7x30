@@ -1,6 +1,7 @@
 /* arch/arm/mach-msm/include/mach/proc_comm.h
  *
  * Copyright (c) 2007-2009,2011 The Linux Foundation. All rights reserved.
+ * Copyright   2010 Sony Ericsson Mobile Communications Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -146,8 +147,13 @@ enum {
 	PCOM_OEM_TEST_CMD = PCOM_OEM_FIRST_CMD,
 
 	/* add OEM PROC COMM commands here */
+	/* BEGIN: ID:s for 3.5mm Audio Jack driver */
+	PCOM_OEM_GET_HEADSET_ADC_VALUE,
+	PCOM_OEM_ENABLE_HSED_ISR,
+	PCOM_OEM_GET_CRADLE_ADC_VALUE,
+	/* END: ID:s for 3.5mm Audio Jack driver */
 
-	PCOM_OEM_LAST = PCOM_OEM_TEST_CMD,
+	PCOM_OEM_LAST = PCOM_OEM_GET_CRADLE_ADC_VALUE,
 };
 
 enum {
