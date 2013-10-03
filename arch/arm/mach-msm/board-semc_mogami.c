@@ -147,6 +147,10 @@
 #include <linux/mddi_auo_s6d05a1_hvga.h>
 #endif
 
+#ifdef CONFIG_TOUCHSCREEN_CYTTSP_SPI_SEMC
+#include <linux/input/cyttsp_semc.h>
+#include "touch-semc.h"
+#endif
 #ifdef CONFIG_TOUCHSCREEN_CY8CTMA300_SPI
 #include <linux/spi/cy8ctma300_touch.h>
 #endif
@@ -186,9 +190,12 @@
 
 #define LCD_VDD_VOLTAGE 2850000
 
-#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300_SPI
+#if defined(CONFIG_TOUCHSCREEN_CY8CTMA300_SPI) || \
+	defined(CONFIG_TOUCHSCREEN_CYTTSP_SPI_SEMC)
 #define CYPRESS_TOUCH_GPIO_RESET	40
 #define CYPRESS_TOUCH_GPIO_IRQ		42
+#endif
+#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300_SPI
 #define CYPRESS_TOUCH_GPIO_SPI_CS	46
 #endif
 #ifdef CONFIG_TOUCHSCREEN_CLEARPAD
@@ -2017,7 +2024,7 @@ static struct platform_device mddi_auo_hvga_display_device = {
 #endif /* CONFIG_FB_MSM_MDDI_AUO_HVGA */
 
 #if defined(CONFIG_TOUCHSCREEN_CY8CTMA300_SPI) || \
-	defined(CONFIG_TOUCHSCREEN_CYTTSP_SPI)
+	defined(CONFIG_TOUCHSCREEN_CYTTSP_SPI_SEMC)
 struct msm_gpio ttsp_gpio_cfg_data[] = {
 	{ GPIO_CFG(CYPRESS_TOUCH_GPIO_IRQ, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP,
 		GPIO_CFG_2MA), "ttsp_irq" },
@@ -2079,6 +2086,136 @@ static struct cypress_touch_platform_data cypress_touch_data = {
 };
 
 #endif /* CONFIG_TOUCHSCREEN_CY8CTMA300_SPI */
+
+#ifdef CONFIG_TOUCHSCREEN_CYTTSP_SPI_SEMC
+int cyttsp_xres(void)
+{
+	int polarity;
+	int rc;
+	rc = gpio_direction_input(CYPRESS_TOUCH_GPIO_RESET);
+	if (rc) {
+		printk(KERN_ERR "%s: failed to set direction input, %d\n",
+		       __func__, rc);
+		return -EIO;
+	}
+	polarity = gpio_get_value(CYPRESS_TOUCH_GPIO_RESET) & 0x01;
+	printk(KERN_INFO "%s: %d\n", __func__, polarity);
+	rc = gpio_direction_output(CYPRESS_TOUCH_GPIO_RESET, polarity ^ 1);
+	if (rc) {
+		printk(KERN_ERR "%s: failed to set direction output, %d\n",
+		       __func__, rc);
+		return -EIO;
+	}
+	msleep(1);
+	gpio_set_value(CYPRESS_TOUCH_GPIO_RESET, polarity);
+	return 0;
+}
+
+int cyttsp_init(int on)
+{
+	int rc = -1;
+	if (on) {
+		if (gpio_request(CYPRESS_TOUCH_GPIO_IRQ, "ttsp_irq"))
+			goto ttsp_irq_err;
+		if (gpio_request(CYPRESS_TOUCH_GPIO_RESET, "ttsp_reset"))
+			goto ttsp_reset_err;
+
+		rc = msm_gpios_enable(ttsp_gpio_cfg_data,
+					ARRAY_SIZE(ttsp_gpio_cfg_data));
+		if (rc)
+			goto ttsp_gpio_cfg_err;
+		return 0;
+	} else {
+		rc = 0;
+	}
+ttsp_gpio_cfg_err:
+	gpio_free(CYPRESS_TOUCH_GPIO_RESET);
+ttsp_reset_err:
+	gpio_free(CYPRESS_TOUCH_GPIO_IRQ);
+ttsp_irq_err:
+	return rc;
+}
+
+int cyttsp_wakeup(void)
+{
+	int ret;
+
+	ret = gpio_direction_output(CYPRESS_TOUCH_GPIO_IRQ, 0);
+	if (ret) {
+		printk(KERN_ERR "%s: Failed to request gpio_direction_output\n",
+		__func__);
+                return ret;
+	}
+	msleep(50);
+	gpio_set_value(CYPRESS_TOUCH_GPIO_IRQ, 0);
+	msleep(1);
+	gpio_set_value(CYPRESS_TOUCH_GPIO_IRQ, 1);
+	udelay(100);
+	gpio_set_value(CYPRESS_TOUCH_GPIO_IRQ, 0);
+	msleep(1);
+	gpio_set_value(CYPRESS_TOUCH_GPIO_IRQ, 1);
+	printk(KERN_INFO "%s: wakeup\n", __func__);
+	ret = gpio_direction_input(CYPRESS_TOUCH_GPIO_IRQ);
+	if (ret) {
+		printk(KERN_ERR "%s: Failed to request gpio_direction_input\n",
+		__func__);
+		return ret;
+	}
+	msleep(50);
+	return 0;
+}
+
+#ifdef CONFIG_TOUCHSCREEN_CYTTSP_KEY
+#define TT_KEY_BACK_FLAG	0x01
+#define TT_KEY_MENU_FLAG	0x02
+#define TT_KEY_HOME_FLAG	0x04
+
+static struct input_dev *input_dev_cyttsp_key;
+
+static int __init cyttsp_key_init(void)
+{
+	input_dev_cyttsp_key = input_allocate_device();
+	if (!input_dev_cyttsp_key) {
+		pr_err("%s: Error, unable to alloc cyttsp key device\n", __func__);
+		return -ENOMEM;
+	}
+	input_dev_cyttsp_key->name = "cyttsp_key";
+	input_dev_cyttsp_key->phys = "/sys/bus/spi/devices/spi0.0/";
+	input_set_capability(input_dev_cyttsp_key, EV_KEY, KEY_MENU);
+	input_set_capability(input_dev_cyttsp_key, EV_KEY, KEY_BACK);
+	input_set_capability(input_dev_cyttsp_key, EV_KEY, KEY_HOME);
+	if (input_register_device(input_dev_cyttsp_key)) {
+		pr_err("%s: Error, unable to reg cyttsp key device\n", __func__);
+		input_free_device(input_dev_cyttsp_key);
+		return -ENODEV;
+	}
+	return 0;
+}
+module_init(cyttsp_key_init);
+
+int cyttsp_key_rpc_callback(u8 data[], int size)
+{
+	static u8 last;
+	u8 toggled = last ^ data[0];
+
+	if (toggled & TT_KEY_MENU_FLAG)
+		input_report_key(input_dev_cyttsp_key, KEY_MENU,
+			!!(*data & TT_KEY_MENU_FLAG));
+
+	if (toggled & TT_KEY_BACK_FLAG)
+		input_report_key(input_dev_cyttsp_key, KEY_BACK,
+			!!(*data & TT_KEY_BACK_FLAG));
+
+	if (toggled & TT_KEY_HOME_FLAG)
+		input_report_key(input_dev_cyttsp_key, KEY_HOME,
+			!!(*data & TT_KEY_HOME_FLAG));
+
+	input_sync(input_dev_cyttsp_key);
+	last = data[0];
+	return 0;
+}
+#endif /* CONFIG_TOUCHSCREEN_CYTTSP_KEY */
+#endif /* CONFIG_TOUCHSCREEN_CYTTSP_SPI_SEMC */
 
 #ifdef CONFIG_TOUCHSCREEN_CLEARPAD
 static int clearpad_vreg_configure(int enable)
@@ -2541,6 +2678,17 @@ static struct spi_board_info msm_spi_board_info[] __initdata = {
 		.modalias	= "cypress_touchscreen",
 		.mode		= SPI_MODE_0,
 		.platform_data	= &cypress_touch_data,
+		.bus_num	= 0,
+		.chip_select	= 0,
+		.max_speed_hz	= 1 * 1000 * 1000,
+		.irq		= MSM_GPIO_TO_INT(CYPRESS_TOUCH_GPIO_IRQ),
+	},
+#endif
+#ifdef CONFIG_TOUCHSCREEN_CYTTSP_SPI_SEMC
+	{
+		.modalias	= CY_SPI_NAME,
+		.mode		= SPI_MODE_0,
+		.platform_data	= &cyttsp_data,
 		.bus_num	= 0,
 		.chip_select	= 0,
 		.max_speed_hz	= 1 * 1000 * 1000,
