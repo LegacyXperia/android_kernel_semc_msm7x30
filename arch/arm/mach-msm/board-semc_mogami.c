@@ -268,6 +268,58 @@ vreg_configure_err:
 	return rc;
 }
 
+/* Platform specific HW-ID GPIO mask */
+static const u8 hw_id_gpios[] = {150, 149, 148, 43};
+
+static ssize_t hw_id_get_mask(struct class *class, struct class_attribute *attr, char *buf)
+{
+	char hwid;
+	unsigned int i;
+	unsigned cfg;
+	int rc;
+	for (hwid = i = 0; i < ARRAY_SIZE(hw_id_gpios); i++) {
+		cfg = GPIO_CFG(hw_id_gpios[i], 0, GPIO_CFG_INPUT,
+				GPIO_CFG_NO_PULL, GPIO_CFG_2MA);
+		rc = gpio_tlmm_config(cfg, GPIO_CFG_ENABLE);
+		if (rc) {
+			printk(KERN_ERR
+				"%s: Enabling of GPIO failed. "
+				"gpio_tlmm_config(%#x, enable)=%d\n",
+				__func__, cfg, rc);
+			return rc;
+		}
+		hwid |= (gpio_get_value(hw_id_gpios[i]) & 1) << i;
+		rc = gpio_tlmm_config(cfg, GPIO_CFG_DISABLE);
+		if (rc) {
+			printk(KERN_INFO
+				"%s: Disabling of GPIO failed. "
+				"The got GPIO value is valid. "
+				"gpio_tlmm_config(%#x, disable)=%d\n",
+				__func__, cfg, rc);
+		}
+	}
+	printk(KERN_INFO "Board Mogami HW ID: 0x%02x\n", hwid);
+	return sprintf(buf, "0x%02x\n", hwid);
+}
+
+static CLASS_ATTR(hwid, 0444, hw_id_get_mask, NULL);
+static struct class hwid_class = {.name	= "hwid",};
+static void __init hw_id_class_init(void)
+{
+	int error;
+	error = class_register(&hwid_class);
+	if (error) {
+		printk(KERN_ERR "%s: class_register failed\n", __func__);
+		return;
+	}
+	error = class_create_file(&hwid_class, &class_attr_hwid);
+	if (error) {
+		printk(KERN_ERR "%s: class_create_file failed\n",
+		__func__);
+		class_unregister(&hwid_class);
+	}
+}
+
 struct pm8xxx_gpio_init_info {
 	unsigned			gpio;
 	struct pm_gpio			config;
@@ -3688,6 +3740,7 @@ static void __init msm7x30_init(void)
 	snddev_hsed_voltage_init();
 	aux_pcm_gpio_init();
 #endif
+	hw_id_class_init();
 	shared_vreg_on();
 
 	i2c_register_board_info(0, msm_i2c_board_info,
