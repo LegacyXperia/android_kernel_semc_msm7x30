@@ -711,6 +711,12 @@ config INPUT_BMP180
 	  Say Y here if you want support for the BMP180 pressure
 	  device. This driver only supports I2C communication.
 
+config SENSORS_AKM8975
+	tristate "AKM8975 Compass Driver"
+	depends on I2C
+	help
+	  AKM8975 Compass Driver implemented by HTC.
+
 config INPUT_APDS9702
 	tristate "APDS9702 proximity driver"
 	depends on I2C

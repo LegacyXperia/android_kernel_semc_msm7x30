@@ -66,5 +66,6 @@ obj-$(CONFIG_BMP18X_I2C)		+= bmp18x-i2c.o
 obj-$(CONFIG_INPUT_BMA150_NG)		+= bma150_ng.o
 obj-$(CONFIG_INPUT_BMA250)              += bma250.o
 obj-$(CONFIG_INPUT_BMP180)		+= bmp180.o
+obj-$(CONFIG_SENSORS_AKM8975)           += akm8975.o
 obj-$(CONFIG_INPUT_APDS9702)            += apds9702.o
 obj-$(CONFIG_INPUT_SIMPLE_REMOTE)       += simple_remote.o
