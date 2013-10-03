@@ -103,6 +103,9 @@
 #include <mach/semc_charger_usb.h>
 #endif
 
+#ifdef CONFIG_INPUT_BMA150_NG
+#include <linux/bma150_ng.h>
+#endif
 #ifdef CONFIG_INPUT_BMA250
 #include <linux/bma250.h>
 #endif
@@ -150,6 +153,9 @@
 #define BQ24185_GPIO_IRQ		(31)
 #endif
 
+#ifdef CONFIG_INPUT_BMA150_NG
+#define BMA150_GPIO			51
+#endif
 #ifdef CONFIG_INPUT_BMA250
 #define BMA250_GPIO		51
 #define BMA250_DEFAULT_RATE	50
@@ -426,12 +432,35 @@ struct novatek_i2c_pdata novatek_i2c_pdata = {
 };
 #endif
 
+#ifdef CONFIG_INPUT_BMA150_NG
+static int bma150_gpio_setup(bool request)
+{
+	if (request)
+		return gpio_request(BMA150_GPIO, "bma150_irq");
+	else
+		gpio_free(BMA150_GPIO);
+	return 0;
+}
+
+struct bma150_platform_data bma150_ng_platform_data = {
+	.gpio_setup = bma150_gpio_setup,
+};
+#endif
+
 static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
 #ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
 	{
 		I2C_BOARD_INFO(MDDI_NOVATEK_I2C_NAME, 0x98 >> 1),
 		.type = MDDI_NOVATEK_I2C_NAME,
 		.platform_data = &novatek_i2c_pdata,
+	},
+#endif
+#ifdef CONFIG_INPUT_BMA150_NG
+	{
+		I2C_BOARD_INFO("bma150", 0x70 >> 1),
+		.irq = MSM_GPIO_TO_INT(BMA150_GPIO),
+		.platform_data = &bma150_ng_platform_data,
+		.type = "bma150"
 	},
 #endif
 };
@@ -2155,6 +2184,14 @@ static struct i2c_board_info msm_i2c_board_info[] = {
 		.type = BQ24185_NAME,
 	},
 #endif
+#ifdef CONFIG_INPUT_BMA150_NG
+	{
+		I2C_BOARD_INFO("bma150", 0x70 >> 1),
+		.irq = MSM_GPIO_TO_INT(BMA150_GPIO),
+		.platform_data = &bma150_ng_platform_data,
+		.type = "bma150"
+	},
+#endif
 #ifdef CONFIG_INPUT_BMA250
 	{
 		I2C_BOARD_INFO("bma250", 0x18),
@@ -3426,6 +3463,7 @@ out3:
 
 static void __init shared_vreg_on(void)
 {
+	vreg_helper("gp4", 2600000, 1);  /* ldo10 - BMA150, AK8975B */
 #ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
 	vreg_helper("gp6", LCD_VDD_VOLTAGE, 1);  /* ldo15 - LCD */
 #endif
