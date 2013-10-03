@@ -1586,7 +1586,9 @@ again:
 		goto to_bl_mode;
 
 	/* init gesture setup */
+#ifndef CONFIG_MACH_SEMC_IYOKAN
 	if (ts->platform_data->use_gestures) {
+#endif
 		u8 gesture_setup;
 
 		DBG(printk(KERN_INFO"%s: Init gesture setup\n", __func__);)
@@ -1608,7 +1610,9 @@ again:
 		if (retval)
 			goto err_gestures;
 		msleep(CY_DELAY_DFLT);
+#ifndef CONFIG_MACH_SEMC_IYOKAN
 	}
+#endif
 	goto done;
 
 err_gestures:
