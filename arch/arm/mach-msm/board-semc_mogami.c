@@ -147,6 +147,10 @@
 #include <linux/mddi_auo_s6d05a1_hvga.h>
 #endif
 
+#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300_SPI
+#include <linux/spi/cy8ctma300_touch.h>
+#endif
+
 #ifdef CONFIG_CHARGER_BQ24185
 #define BQ24185_GPIO_IRQ		31
 #endif
@@ -178,6 +182,14 @@
 #endif
 
 #define LCD_VDD_VOLTAGE 2850000
+
+#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300_SPI
+#define CYPRESS_TOUCH_GPIO_RESET	40
+#define CYPRESS_TOUCH_GPIO_IRQ		42
+#define CYPRESS_TOUCH_GPIO_SPI_CS	46
+#endif
+
+#define TOUCH_VDD_VOLTAGE 3050000
 
 #define MSM_PMEM_SF_SIZE	0x1700000
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
@@ -1998,6 +2010,70 @@ static struct platform_device mddi_auo_hvga_display_device = {
 };
 #endif /* CONFIG_FB_MSM_MDDI_AUO_HVGA */
 
+#if defined(CONFIG_TOUCHSCREEN_CY8CTMA300_SPI) || \
+	defined(CONFIG_TOUCHSCREEN_CYTTSP_SPI)
+struct msm_gpio ttsp_gpio_cfg_data[] = {
+	{ GPIO_CFG(CYPRESS_TOUCH_GPIO_IRQ, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP,
+		GPIO_CFG_2MA), "ttsp_irq" },
+};
+#endif
+
+#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300_SPI
+static int cypress_touch_gpio_init(void)
+{
+	int rc;
+
+	msleep(10);
+
+	rc = msm_gpios_enable(ttsp_gpio_cfg_data,
+				ARRAY_SIZE(ttsp_gpio_cfg_data));
+	if (rc)
+		return rc;
+
+	gpio_set_value(CYPRESS_TOUCH_GPIO_RESET, 1);
+	return 0;
+}
+
+static int cypress_touch_spi_cs_set(bool val)
+{
+	int rc = 0;
+	int cfg;
+
+	if (val) {
+		gpio_set_value(CYPRESS_TOUCH_GPIO_SPI_CS, 1);
+		cfg = GPIO_CFG(CYPRESS_TOUCH_GPIO_SPI_CS, 1, GPIO_CFG_OUTPUT,
+					GPIO_CFG_NO_PULL, GPIO_CFG_2MA);
+		rc = gpio_tlmm_config(cfg, GPIO_CFG_ENABLE);
+		if (rc)
+			pr_err("%s: Enabling of GPIO failed. "
+				"gpio_tlmm_config(%#x, enable)=%d\n",
+				__func__, cfg, rc);
+	} else {
+		cfg = GPIO_CFG(CYPRESS_TOUCH_GPIO_SPI_CS, 0, GPIO_CFG_OUTPUT,
+					GPIO_CFG_NO_PULL, GPIO_CFG_2MA);
+		rc = gpio_tlmm_config(cfg, GPIO_CFG_ENABLE);
+		if (rc)
+			pr_err("%s: Enabling of GPIO failed. "
+				"gpio_tlmm_config(%#x, enable)=%d\n",
+				__func__, cfg, rc);
+		gpio_set_value(CYPRESS_TOUCH_GPIO_SPI_CS, 0);
+	}
+	return rc;
+}
+
+static struct cypress_touch_platform_data cypress_touch_data = {
+	.x_max = 479,
+	.y_max = 853,
+	.z_max = 255,
+	.width_major = 40,
+	.gpio_init = cypress_touch_gpio_init,
+	.gpio_irq_pin = CYPRESS_TOUCH_GPIO_IRQ,
+	.gpio_reset_pin = CYPRESS_TOUCH_GPIO_RESET,
+	.spi_cs_set = cypress_touch_spi_cs_set,
+};
+
+#endif /* CONFIG_TOUCHSCREEN_CY8CTMA300_SPI */
+
 #ifdef CONFIG_SEMC_CHARGER_USB_ARCH
 static char *semc_chg_usb_supplied_to[] = {
 	BATTERY_CHARGALG_NAME,
@@ -2387,6 +2463,20 @@ static struct i2c_board_info msm_i2c_board_info[] = {
 	{
 		I2C_BOARD_INFO("lm3561", 0xA6 >> 1),
 		.platform_data = &lm3561_platform_data,
+	},
+#endif
+};
+
+static struct spi_board_info msm_spi_board_info[] __initdata = {
+#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300_SPI
+	{
+		.modalias	= "cypress_touchscreen",
+		.mode		= SPI_MODE_0,
+		.platform_data	= &cypress_touch_data,
+		.bus_num	= 0,
+		.chip_select	= 0,
+		.max_speed_hz	= 1 * 1000 * 1000,
+		.irq		= MSM_GPIO_TO_INT(CYPRESS_TOUCH_GPIO_IRQ),
 	},
 #endif
 };
@@ -3780,6 +3870,7 @@ out3:
 
 static void __init shared_vreg_on(void)
 {
+	vreg_helper("gp13", TOUCH_VDD_VOLTAGE, 1); /* ldo20 - Touch */
 	vreg_helper("gp4", 2600000, 1);  /* ldo10 - BMA150, AK8975B */
 #ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
 	vreg_helper("gp6", LCD_VDD_VOLTAGE, 1);  /* ldo15 - LCD */
@@ -3964,6 +4055,9 @@ static void __init msm7x30_init(void)
 #endif
 	hw_id_class_init();
 	shared_vreg_on();
+#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300_SPI
+	cypress_touch_gpio_init();
+#endif /* CONFIG_TOUCHSCREEN_CY8CTMA300_SPI */
 
 	i2c_register_board_info(0, msm_i2c_board_info,
 			ARRAY_SIZE(msm_i2c_board_info));
@@ -3973,6 +4067,9 @@ static void __init msm7x30_init(void)
 
 	i2c_register_board_info(4 /* QUP ID */, msm_camera_boardinfo,
 				ARRAY_SIZE(msm_camera_boardinfo));
+
+	spi_register_board_info(msm_spi_board_info,
+				ARRAY_SIZE(msm_spi_board_info));
 
 #ifdef CONFIG_I2C_SSBI
 	msm_device_ssbi7.dev.platform_data = &msm_i2c_ssbi7_pdata;
