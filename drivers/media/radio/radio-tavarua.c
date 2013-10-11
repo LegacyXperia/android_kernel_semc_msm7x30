@@ -4630,7 +4630,7 @@ static int tavarua_suspend(struct platform_device *pdev, pm_message_t state)
 	struct tavarua_device *radio = platform_get_drvdata(pdev);
 	int retval;
 	int users = 0;
-	printk(KERN_INFO DRIVER_NAME "%s: radio suspend\n\n", __func__);
+	FMDBG("%s: radio suspend\n\n", __func__);
 
 	if (unlikely(radio == NULL)) {
 		FMDERR("%s:radio is null", __func__);
@@ -4667,7 +4667,7 @@ static int tavarua_resume(struct platform_device *pdev)
 	struct tavarua_device *radio = platform_get_drvdata(pdev);
 	int retval;
 	int users = 0;
-	printk(KERN_INFO DRIVER_NAME "%s: radio resume\n\n", __func__);
+	FMDBG("%s: radio resume\n\n", __func__);
 
 	if (unlikely(radio == NULL)) {
 		FMDERR("%s:radio is null", __func__);
