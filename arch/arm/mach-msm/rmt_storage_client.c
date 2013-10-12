@@ -319,7 +319,7 @@ static int rmt_storage_event_open_cb(struct rmt_storage_event *event_args,
 	if (event_type != RMT_STORAGE_EVNT_OPEN)
 		return -1;
 
-	pr_info("%s: open callback received\n", __func__);
+	pr_debug("%s: open callback received\n", __func__);
 
 	ret = xdr_recv_bytes(xdr, (void **)&path, &len);
 	if (ret || !path) {
@@ -362,7 +362,7 @@ static int rmt_storage_event_open_cb(struct rmt_storage_event *event_args,
 		return cid;
 	}
 	__set_bit(cid, &rmc->cids);
-	pr_info("open partition %s handle=%d\n", event_args->path, cid);
+	pr_debug("open partition %s handle=%d\n", event_args->path, cid);
 
 #ifdef CONFIG_MSM_RMT_STORAGE_CLIENT_STATS
 	stats = &client_stats[cid - 1];
@@ -593,7 +593,7 @@ static int rmt_storage_event_user_data_cb(struct rmt_storage_event *event_args,
 	if (event_type != RMT_STORAGE_EVNT_SEND_USER_DATA)
 		return -1;
 
-	pr_info("%s: send user data callback received\n", __func__);
+	pr_debug("%s: send user data callback received\n", __func__);
 	ret = xdr_recv_pointer(xdr, (void **)&event,
 			sizeof(struct rmt_storage_event_params),
 			rmt_storage_parse_params);
@@ -624,7 +624,7 @@ static int rmt_storage_event_write_iovec_cb(
 	if (event_type != RMT_STORAGE_EVNT_WRITE_IOVEC)
 		return -EINVAL;
 
-	pr_info("%s: write iovec callback received\n", __func__);
+	pr_debug("%s: write iovec callback received\n", __func__);
 	xdr_recv_uint32(xdr, &event_args->handle);
 	xdr_recv_uint32(xdr, &ent);
 	pr_debug("handle = %d\n", event_args->handle);
@@ -669,7 +669,7 @@ static int rmt_storage_event_read_iovec_cb(
 	if (event_type != RMT_STORAGE_EVNT_READ_IOVEC)
 		return -EINVAL;
 
-	pr_info("%s: read iovec callback received\n", __func__);
+	pr_debug("%s: read iovec callback received\n", __func__);
 	xdr_recv_uint32(xdr, &event_args->handle);
 	xdr_recv_uint32(xdr, &ent);
 	pr_debug("handle = %d\n", event_args->handle);
@@ -737,7 +737,7 @@ static int rmt_storage_sdio_smem_probe(struct platform_device *pdev)
 	sdio_smem->cb_func = sdio_smem_cb;
 	ret = sdio_smem_register_client();
 	if (ret)
-		pr_info("%s: Error (%d) registering sdio_smem client\n",
+		pr_err("%s: Error (%d) registering sdio_smem client\n",
 			__func__, ret);
 	return ret;
 }
@@ -780,7 +780,7 @@ static int rmt_storage_event_alloc_rmt_buf_cb(
 	if (event_type != RMT_STORAGE_EVNT_ALLOC_RMT_BUF)
 		return -EINVAL;
 
-	pr_info("%s: Alloc rmt buf callback received\n", __func__);
+	pr_debug("%s: Alloc rmt buf callback received\n", __func__);
 	xdr_recv_uint32(xdr, &handle);
 	xdr_recv_uint32(xdr, &size);
 
@@ -1000,7 +1000,7 @@ static long rmt_storage_ioctl(struct file *fp, unsigned int cmd,
 		break;
 
 	case RMT_STORAGE_SEND_STATUS:
-		pr_info("%s: send status ioctl\n", __func__);
+		pr_debug("%s: send status ioctl\n", __func__);
 		if (copy_from_user(&status, (void __user *)arg,
 				sizeof(struct rmt_storage_send_sts))) {
 			pr_err("%s: copy from user failed\n\n", __func__);
@@ -1573,7 +1573,7 @@ static int rmt_storage_reg_callbacks(struct msm_rpc_client *client)
 				 RMT_STORAGE_EVNT_ALLOC_RMT_BUF,
 				 rmt_storage_event_alloc_rmt_buf_cb);
 	if (ret)
-		pr_info("%s: Unable (%d) registering aloc_rmt_buf\n",
+		pr_err("%s: Unable (%d) registering aloc_rmt_buf\n",
 			__func__, ret);
 
 	pr_debug("%s: Callbacks (re)registered for 0x%08x\n\n", __func__,
