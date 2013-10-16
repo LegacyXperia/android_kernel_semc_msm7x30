@@ -435,20 +435,26 @@ static inline void setup_cpufreq_table(void) { }
 void __devinit pll2_fixup(void)
 {
 	struct clkctl_acpu_speed *speed = acpu_freq_tbl;
+#ifndef CONFIG_MSM_7X30_OVERCLOCK
 	u8 pll2_l = readl_relaxed(PLL2_L_VAL_ADDR) & 0xFF;
+#endif
 
 	for ( ; speed->acpu_clk_khz; speed++) {
 		if (speed->src != PLL_2)
 			backup_s = speed;
+#ifndef CONFIG_MSM_7X30_OVERCLOCK
 		if (speed->pll_rate && speed->pll_rate->l == pll2_l) {
 			speed++;
 			speed->acpu_clk_khz = 0;
 			return;
 		}
+#endif
 	}
 
+#ifndef CONFIG_MSM_7X30_OVERCLOCK
 	pr_err("Unknown PLL2 lval %d\n", pll2_l);
 	BUG();
+#endif
 }
 
 #define RPM_BYPASS_MASK	(1 << 3)
