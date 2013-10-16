@@ -2612,4 +2612,12 @@ config MSM_USE_USER_ACCESSIBLE_TIMERS
 	  Enables MSM-specific user accessible timers via a shared
 	  memory page containing the cycle counter.
 
+config MSM_7X30_OVERCLOCK
+	bool "Allow MSM 7x30 to overclock"
+	help
+	  Allows MSM 7x30 devices to skip PLL_2 value, which sets a limit on
+	  maximum clock speed.
+
+	  If unsure, say 'N' here.
+
 endif
