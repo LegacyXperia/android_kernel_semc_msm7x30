@@ -2362,7 +2362,7 @@ SYSCALL_DEFINE5(mount, char __user *, dev_name, char __user *, dir_name,
 {
 	int ret;
 	char *kernel_type = NULL;
-	char *kernel_dir;
+	char *kernel_dir = NULL;
 	char *kernel_dev = NULL;
 	unsigned long data_page;
 
