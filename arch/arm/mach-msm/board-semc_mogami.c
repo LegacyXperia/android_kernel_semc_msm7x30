@@ -147,20 +147,8 @@
 #include <linux/mddi_auo_s6d05a1_hvga.h>
 #endif
 
-#define MSM_PMEM_SF_SIZE	0x1700000
-#ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
-#define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 3) /* 4bpp * 3 Pages */
-#else
-#define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 2) /* 4bpp * 2 Pages */
-#endif
-/*
- * Reserve space for double buffered full screen
- * res V4L2 video overlay - i.e. 1280x720x1.5x2
- */
-#define MSM_V4L2_VIDEO_OVERLAY_BUF_SIZE 2764800
-
 #ifdef CONFIG_CHARGER_BQ24185
-#define BQ24185_GPIO_IRQ		(31)
+#define BQ24185_GPIO_IRQ		31
 #endif
 
 #ifdef CONFIG_SENSORS_AKM8975
@@ -170,12 +158,12 @@
 #define BMA150_GPIO			51
 #endif
 #ifdef CONFIG_INPUT_BMA250
-#define BMA250_GPIO		51
-#define BMA250_DEFAULT_RATE	50
+#define BMA250_GPIO			51
+#define BMA250_DEFAULT_RATE		50
 #endif
 
 #if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
-#define LM356X_HW_RESET_GPIO 2
+#define LM356X_HW_RESET_GPIO		2
 #endif
 
 #ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
@@ -190,6 +178,18 @@
 #endif
 
 #define LCD_VDD_VOLTAGE 2850000
+
+#define MSM_PMEM_SF_SIZE	0x1700000
+#ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
+#define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 3) /* 4bpp * 3 Pages */
+#else
+#define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 2) /* 4bpp * 2 Pages */
+#endif
+/*
+ * Reserve space for double buffered full screen
+ * res V4L2 video overlay - i.e. 1280x720x1.5x2
+ */
+#define MSM_V4L2_VIDEO_OVERLAY_BUF_SIZE 2764800
 
 #define MSM_FB_EXT_BUF_SIZE    0
 
