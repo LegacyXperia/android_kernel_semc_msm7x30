@@ -83,6 +83,8 @@
 #include "board-msm7x30-regulator.h"
 #include "pm.h"
 
+#include "keypad-semc.h"
+
 #define MSM_PMEM_SF_SIZE	0x1700000
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 3) /* 4bpp * 3 Pages */
@@ -1226,6 +1228,8 @@ static int __init buses_init(void)
 				  GPIO_CFG_NO_PULL, GPIO_CFG_2MA), GPIO_CFG_ENABLE))
 		pr_err("%s: gpio_tlmm_config (gpio=%d) failed\n",
 		       __func__, PMIC_GPIO_INT);
+
+	pm8058_7x30_data.keypad_pdata = &pm8xxx_keypad_data;
 
 	return 0;
 }
