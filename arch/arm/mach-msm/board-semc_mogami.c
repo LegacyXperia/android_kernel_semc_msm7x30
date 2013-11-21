@@ -183,6 +183,45 @@ static unsigned int phys_add = DDR2_BANK_BASE;
 unsigned long ebi1_phys_offset = DDR2_BANK_BASE;
 EXPORT_SYMBOL(ebi1_phys_offset);
 
+static struct regulator *reg;
+
+static int vreg_helper(const char *regName, unsigned uv, int enable)
+{
+	int rc = 0;
+
+	reg = regulator_get(NULL, regName);
+	if (IS_ERR(reg)) {
+		pr_err("%s: get vdd failed\n", __func__);
+		return rc;
+	}
+
+	if (enable) {
+		rc = regulator_set_voltage(reg, uv, uv);
+		if (rc) {
+			pr_err("%s: set voltage failed, rc=%d\n", __func__, rc);
+			goto vreg_configure_err;
+		}
+		rc = regulator_enable(reg);
+		if (rc) {
+			pr_err("%s: enable vdd failed, rc=%d\n", __func__, rc);
+			goto vreg_configure_err;
+		}
+	} else {
+		rc = regulator_set_voltage(reg, 0, uv);
+		if (rc) {
+			pr_err("%s: set voltage failed, rc=%d\n", __func__, rc);
+			goto vreg_configure_err;
+		}
+		rc = regulator_disable(reg);
+		if (rc)
+			pr_err("%s: disable vdd failed, rc=%d\n", __func__, rc);
+	}
+	return rc;
+vreg_configure_err:
+	regulator_put(reg);
+	return rc;
+}
+
 struct pm8xxx_gpio_init_info {
 	unsigned			gpio;
 	struct pm_gpio			config;
