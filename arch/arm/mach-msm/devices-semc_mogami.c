@@ -1020,12 +1020,10 @@ struct platform_device msm_device_vidc_720p = {
 #define MDP_BASE          0xA3F00000
 #define PMDH_BASE         0xAD600000
 #define EMDH_BASE         0xAD700000
-#define TVENC_BASE        0xAD400000
 #else
 #define MDP_BASE          0xAA200000
 #define PMDH_BASE         0xAA600000
 #define EMDH_BASE         0xAA700000
-#define TVENC_BASE        0xAA400000
 #endif
 
 static struct resource msm_mdp_resources[] = {
@@ -1081,26 +1079,6 @@ static struct resource msm_ebi2_lcd_resources[] = {
 	},
 };
 
-static struct resource msm_tvenc_resources[] = {
-	{
-		.name   = "tvenc",
-		.start  = TVENC_BASE,
-		.end    = TVENC_BASE + PAGE_SIZE - 1,
-		.flags  = IORESOURCE_MEM,
-	}
-};
-
-#ifdef CONFIG_FB_MSM_TVOUT
-static struct resource tvout_device_resources[] = {
-	{
-		.name  = "tvout_device_irq",
-		.start = INT_TV_ENC,
-		.end   = INT_TV_ENC,
-		.flags = IORESOURCE_IRQ,
-	},
-};
-#endif
-
 static struct platform_device msm_mdp_device = {
 	.name   = "mdp",
 	.id     = 0,
@@ -1128,22 +1106,6 @@ static struct platform_device msm_ebi2_lcd_device = {
 	.num_resources  = ARRAY_SIZE(msm_ebi2_lcd_resources),
 	.resource       = msm_ebi2_lcd_resources,
 };
-
-static struct platform_device msm_tvenc_device = {
-	.name   = "tvenc",
-	.id     = 0,
-	.num_resources  = ARRAY_SIZE(msm_tvenc_resources),
-	.resource       = msm_tvenc_resources,
-};
-
-#ifdef CONFIG_FB_MSM_TVOUT
-static struct platform_device tvout_msm_device = {
-	.name = "tvout_device",
-	.id = 0,
-	.num_resources = ARRAY_SIZE(tvout_device_resources),
-	.resource = tvout_device_resources,
-};
-#endif
 
 /* TSIF begin */
 #if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
@@ -1260,12 +1222,6 @@ void __init msm_fb_register_device(char *name, void *data)
 		msm_register_device(&msm_mddi_ext_device, data);
 	else if (!strncmp(name, "ebi2", 4))
 		msm_register_device(&msm_ebi2_lcd_device, data);
-	else if (!strncmp(name, "tvenc", 5))
-		msm_register_device(&msm_tvenc_device, data);
-#ifdef CONFIG_FB_MSM_TVOUT
-	else if (!strncmp(name, "tvout_device", 12))
-		msm_register_device(&tvout_msm_device, data);
-#endif
 	else
 		printk(KERN_ERR "%s: unknown device! %s\n", __func__, name);
 }

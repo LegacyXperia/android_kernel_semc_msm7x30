@@ -3140,78 +3140,6 @@ static struct msm_panel_common_pdata mdp_pdata = {
 	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
 };
 
-static struct regulator *atv_s4, *atv_ldo9;
-
-static int __init atv_dac_power_init(void)
-{
-	int rc;
-	struct regulator_bulk_data regs[] = {
-		{ .supply = "smps4", .min_uV = 2200000, .max_uV = 2200000 },
-		{ .supply = "ldo9",  .min_uV = 2050000, .max_uV = 2050000 },
-	};
-
-	rc = regulator_bulk_get(NULL, ARRAY_SIZE(regs), regs);
-
-	if (rc) {
-		pr_err("%s: could not get regulators: %d\n", __func__, rc);
-		goto bail;
-	}
-
-	rc = regulator_bulk_set_voltage(ARRAY_SIZE(regs), regs);
-
-	if (rc) {
-		pr_err("%s: could not set voltages: %d\n", __func__, rc);
-		goto reg_free;
-	}
-
-	atv_s4   = regs[0].consumer;
-	atv_ldo9 = regs[1].consumer;
-
-reg_free:
-	regulator_bulk_free(ARRAY_SIZE(regs), regs);
-bail:
-	return rc;
-}
-
-static int atv_dac_power(int on)
-{
-	int rc = 0;
-
-	if (on) {
-		rc = regulator_enable(atv_s4);
-		if (rc) {
-			pr_err("%s: s4 vreg enable failed (%d)\n",
-				__func__, rc);
-			return rc;
-		}
-		rc = regulator_enable(atv_ldo9);
-		if (rc) {
-			pr_err("%s: ldo9 vreg enable failed (%d)\n",
-				__func__, rc);
-			return rc;
-		}
-	} else {
-		rc = regulator_disable(atv_ldo9);
-		if (rc) {
-			pr_err("%s: ldo9 vreg disable failed (%d)\n",
-				   __func__, rc);
-			return rc;
-		}
-		rc = regulator_disable(atv_s4);
-		if (rc) {
-			pr_err("%s: s4 vreg disable failed (%d)\n",
-				   __func__, rc);
-			return rc;
-		}
-	}
-	return rc;
-}
-
-static struct tvenc_platform_data atv_pdata = {
-	.poll		 = 1,
-	.pm_vid_en	 = atv_dac_power,
-};
-
 #ifdef CONFIG_SIMPLE_REMOTE_PLATFORM
 #define PLUG_DET_ENA_PIN 80
 #define PLUG_DET_READ_PIN 26
@@ -3356,10 +3284,6 @@ static void __init msm_fb_add_devices(void)
 {
 	msm_fb_register_device("mdp", &mdp_pdata);
 	msm_fb_register_device("pmdh", &mddi_pdata);
-	msm_fb_register_device("tvenc", &atv_pdata);
-#ifdef CONFIG_FB_MSM_TVOUT
-	msm_fb_register_device("tvout_device", NULL);
-#endif
 }
 
 static char *msm_adc_device_names[] = {
@@ -4145,7 +4069,6 @@ static void __init msm7x30_init(void)
 	msm7x30_init_nand();
 	msm_qsd_spi_init();
 
-	atv_dac_power_init();
 #ifdef CONFIG_INPUT_KEYRESET
 	platform_device_register(&semc_reset_keys_device);
 #endif
