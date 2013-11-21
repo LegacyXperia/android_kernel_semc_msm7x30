@@ -3781,7 +3781,7 @@ static struct msm_gpio sdc3_sleep_cfg_data[] = {
 								"sdc3_dat_0"},
 };
 
-#ifdef CONFIG_MMC_MSM_SDC4_LOW_DRIVE_STRENGTH
+#ifdef CONFIG_MACH_SEMC_URUSHI
 static struct msm_gpio sdc4_cfg_data[] = {
 	{GPIO_CFG(58, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_8MA),
 								"sdc4_clk"},
