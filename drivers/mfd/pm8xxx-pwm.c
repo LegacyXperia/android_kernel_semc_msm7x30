@@ -219,6 +219,7 @@ struct pm8xxx_pwm_chip {
 	struct mutex			pwm_mutex;
 	struct device			*dev;
 	bool				is_lpg_supported;
+	bool				is_lo_bank_supported;
 };
 
 static struct pm8xxx_pwm_chip	*pwm_chip;
@@ -261,8 +262,11 @@ static int pm8xxx_pwm_bank_enable(struct pwm_device *pwm, int enable)
 
 	chip = pwm->chip;
 
-	if (!pwm->banks)
-		pwm->banks = (PM_PWM_BANK_LO | PM_PWM_BANK_HI);
+	if (!pwm->banks) {
+		if (chip->is_lo_bank_supported)
+			pwm->banks |= PM_PWM_BANK_LO;
+		pwm->banks |= PM_PWM_BANK_HI;
+	}
 
 	if (pwm->banks & PM_PWM_BANK_LO) {
 		if (enable)
@@ -1031,12 +1035,15 @@ int pm8xxx_pwm_lut_config(struct pwm_device *pwm, int period_us,
 	if (flags & PM_PWM_BANK_HI)
 		pwm->banks = PM_PWM_BANK_HI;
 
-	if (flags & PM_PWM_BANK_LO)
+	if (flags & PM_PWM_BANK_LO && pwm->chip->is_lo_bank_supported)
 		pwm->banks |= PM_PWM_BANK_LO;
 
 	/*Enable both banks if banks information is not shared.*/
-	if (!pwm->banks)
-		pwm->banks |= (PM_PWM_BANK_LO | PM_PWM_BANK_HI);
+	if (!pwm->banks) {
+		if (pwm->chip->is_lo_bank_supported)
+			pwm->banks |= PM_PWM_BANK_LO;
+		pwm->banks |= PM_PWM_BANK_HI;
+	}
 
 	if (!pwm->in_use) {
 		pr_err("pwm_id: %d: stale handle?\n", pwm->pwm_id);
@@ -1443,6 +1450,9 @@ static int __devinit pm8xxx_pwm_probe(struct platform_device *pdev)
 		chip->pwm_channels = PM8XXX_PWM_CHANNELS;
 		chip->pwm_total_pre_divs = NUM_PWM_PRE_DIVIDE;
 	}
+
+	if (version != PM8XXX_VERSION_8058)
+		chip->is_lo_bank_supported = 1;
 
 	chip->pwm_dev = kcalloc(chip->pwm_channels, sizeof(struct pwm_device),
 								GFP_KERNEL);
