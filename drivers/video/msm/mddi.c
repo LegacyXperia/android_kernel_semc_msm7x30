@@ -402,8 +402,6 @@ static int mddi_probe(struct platform_device *pdev)
 			  "%s: can't select mddi io clk targate rate = %d\n",
 			  __func__, clk_rate);
 
-	if (clk_set_max_rate(mddi_clk, clk_rate) < 0)
-		printk(KERN_ERR "%s: clk_set_max_rate failed\n", __func__);
 	mfd->panel_info.clk_rate = mfd->panel_info.clk_min;
 
 	if (!mddi_client_type)
