@@ -204,6 +204,8 @@ struct pm8xxx_led_data {
 	u16			pwm_pause_lo;
 };
 
+static struct pm8xxx_led_data *led_data[PM8XXX_ID_MAX];
+
 static void led_kp_set(struct pm8xxx_led_data *led, enum led_brightness value)
 {
 	int rc;
@@ -643,6 +645,19 @@ static void pm8xxx_led_set(struct led_classdev *led_cdev,
 				value);
 	}
 }
+
+void pm8xxx_led_set_brightness(enum pm8xxx_leds id, uint8_t value)
+{
+	struct pm8xxx_led_data *led = led_data[id];
+	struct led_classdev *led_cdev;
+
+	if (led) {
+		led_cdev = &led->cdev;
+		led_cdev->brightness = value;
+		led_cdev->brightness_set(led_cdev, value);
+	}
+}
+EXPORT_SYMBOL(pm8xxx_led_set_brightness);
 
 static int pm8xxx_set_led_mode_and_adjust_brightness(struct pm8xxx_led_data *led,
 		enum pm8xxx_led_modes led_mode, int max_current)
@@ -1310,6 +1325,8 @@ static int __devinit pm8xxx_led_probe(struct platform_device *pdev)
 		} else {
 			__pm8xxx_led_work(led_dat, led_dat->cdev.brightness);
 		}
+
+		led_data[led_dat->id] = led_dat;
 	}
 
 	led->use_pwm = pdata->use_pwm;
