@@ -138,4 +138,14 @@ struct pm8xxx_led_platform_data {
 	u32				num_configs;
 	int				use_pwm;
 };
+
+#ifdef CONFIG_LEDS_PM8XXX
+void pm8xxx_led_set_brightness(enum pm8xxx_leds id, uint8_t value);
+#else
+static inline void pm8xxx_led_set_brightness(enum pm8xxx_leds id, uint8_t value)
+{
+	/* empty*/
+}
+#endif
+
 #endif /* __LEDS_PM8XXX_H__ */
