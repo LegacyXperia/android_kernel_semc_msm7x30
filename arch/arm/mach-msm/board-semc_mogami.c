@@ -451,7 +451,7 @@ static int pm8058_gpios_init(void)
 			.vin_sel        = PM8058_GPIO_VIN_L5,
 			.function       = PM_GPIO_FUNC_NORMAL,
 			.inv_int_pol    = 0,
-			.out_strength   = PM_GPIO_STRENGTH_LOW,
+			.out_strength   = PM_GPIO_STRENGTH_HIGH,
 			.output_value   = 0,
 		},
 	};
