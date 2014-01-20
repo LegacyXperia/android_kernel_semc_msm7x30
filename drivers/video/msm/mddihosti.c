@@ -75,9 +75,9 @@ boolean mddi_debug_clear_rev_data = TRUE;
 uint32 *mddi_reg_read_value_ptr;
 
 mddi_client_capability_type mddi_client_capability_pkt;
-static boolean mddi_client_capability_request = FALSE;
 
 #ifndef FEATURE_MDDI_DISABLE_REVERSE
+static boolean mddi_client_capability_request = FALSE;
 
 #define MAX_MDDI_REV_HANDLERS 2
 #define INVALID_PKT_TYPE 0xFFFF
