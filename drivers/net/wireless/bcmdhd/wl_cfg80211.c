@@ -2288,7 +2288,7 @@ __wl_cfg80211_scan(struct wiphy *wiphy, struct net_device *ndev,
 		/* we don't do iscan in ibss */
 		ssids = this_ssid;
 	}
-	if (request && !p2p_scan(wl))
+	if (request && (wl->p2p && !p2p_scan(wl)))
 		WL_TRACE_HW4(("START SCAN\n"));
 	wl->scan_request = request;
 	wl_set_drv_status(wl, SCANNING, ndev);
