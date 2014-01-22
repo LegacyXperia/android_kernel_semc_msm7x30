@@ -34,6 +34,10 @@
 
 #include "msm_fb_panel.h"
 
+#ifndef CONFIG_FB_MSM_MDDI_AUTO_DETECT
+#define FEATURE_MDDI_DISABLE_REVERSE
+#endif
+
 #undef FEATURE_MDDI_MC4
 #undef FEATURE_MDDI_S6D0142
 #undef FEATURE_MDDI_HITACHI

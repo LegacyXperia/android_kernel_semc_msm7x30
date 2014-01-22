@@ -584,7 +584,8 @@ config FB_MSM_MDDI_PANEL_AUTO_DETECT
 	bool "MDDI Panel Auto Detect"
 	select FB_MSM_MDDI_AUTO_DETECT
 	---help---
-	  Support for MDDI panel auto detect
+	  Support for MDDI panel auto detect.
+	  This also enables MDDI reverse link.
 
 config FB_MSM_LCDC_PANEL_AUTO_DETECT
 	bool "LCDC Panel Auto Detect"
