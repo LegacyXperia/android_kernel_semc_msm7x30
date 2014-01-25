@@ -2380,6 +2380,9 @@ _gpumem_alloc(struct kgsl_device_private *dev_priv,
 		| KGSL_MEMALIGN_MASK
 		| KGSL_MEMFLAGS_USE_CPU_MAP;
 
+	if (!can_use_cpu_map())
+		flags &= ~KGSL_MEMFLAGS_USE_CPU_MAP;
+
 	entry = kgsl_mem_entry_create();
 	if (entry == NULL)
 		return -ENOMEM;
