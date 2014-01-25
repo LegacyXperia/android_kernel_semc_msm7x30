@@ -1579,7 +1579,7 @@ kgsl_iommu_unmap(void *mmu_specific_pt,
 	   functions purturb the gpuaddr with an offset, so apply the
 	   mask here to make sure we have the right address */
 
-	unsigned int gpuaddr = memdesc->gpuaddr &  KGSL_MMU_ALIGN_MASK;
+	unsigned int gpuaddr = memdesc->gpuaddr &  KGSL_IOMMU_ALIGN_MASK;
 
 	if (range == 0 || gpuaddr == 0)
 		return 0;
