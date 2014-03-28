@@ -138,7 +138,7 @@ static void mdp4_mddi_blt_dmas_update(struct mdp4_overlay_pipe *pipe)
 	bpp = 3; /* overlay ouput is RGB888 */
 #endif
 	off = 0;
-	if (pipe->dmap_cnt & 0x01)
+	if (pipe->dmas_cnt & 0x01)
 		off = pipe->src_height * pipe->src_width * bpp;
 	addr = pipe->dma_blt_addr + off;
 
@@ -191,7 +191,7 @@ static void mdp4_mddi_do_blt(struct msm_fb_data_type *mfd, int enable)
 		pipe->ov_blt_addr = mfd->ov0_wb_buf->write_addr;
 		pipe->dma_blt_addr = mfd->ov0_wb_buf->read_addr;
 		pipe->ov_cnt = 0;
-		pipe->dmap_cnt = 0;
+		pipe->dmas_cnt = 0;
 		vctrl->ov_koff = vctrl->dmas_koff;
 		vctrl->ov_done = vctrl->dmas_done;
 		vctrl->blt_free = 0;
@@ -277,7 +277,7 @@ int mdp4_mddi_pipe_commit(int cndx, int wait)
 	struct mdp4_overlay_pipe *pipe;
 	struct mdp4_overlay_pipe *real_pipe;
 	unsigned long flags;
-	int need_dmap_wait = 0;
+	int need_dmas_wait = 0;
 	int need_ov_wait = 0;
 	int cnt = 0;
 
@@ -327,7 +327,7 @@ int mdp4_mddi_pipe_commit(int cndx, int wait)
 		/* Blt */
 		if (vctrl->blt_wait) {
 			INIT_COMPLETION(vctrl->dmas_comp);
-			need_dmap_wait = 1;
+			need_dmas_wait = 1;
 		}
 		if (vctrl->ov_koff != vctrl->ov_done) {
 			INIT_COMPLETION(vctrl->ov_comp);
@@ -340,12 +340,12 @@ int mdp4_mddi_pipe_commit(int cndx, int wait)
 			pr_debug("%s: wait, ok=%d od=%d dk=%d dd=%d cpu=%d\n",
 			 __func__, vctrl->ov_koff, vctrl->ov_done,
 			vctrl->dmas_koff, vctrl->dmas_done, smp_processor_id());
-			need_dmap_wait = 1;
+			need_dmas_wait = 1;
 		}
 	}
 	spin_unlock_irqrestore(&vctrl->spin_lock, flags);
 
-	if (need_dmap_wait) {
+	if (need_dmas_wait) {
 		pr_debug("%s: wait4dmas\n", __func__);
 		mdp4_mddi_wait4dmas(0);
 	}
@@ -597,7 +597,7 @@ void mdp4_dmas_done_mddi(int cndx)
 
 	/* kick dmas */
 	mdp4_mddi_blt_dmas_update(pipe);
-	pipe->dmap_cnt++;
+	pipe->dmas_cnt++;
 	mdp4_stat.kickoff_dmas++;
 	vctrl->dmas_koff++;
 	vsync_irq_enable(INTR_DMA_S_DONE, MDP_DMA_S_TERM);
@@ -637,7 +637,7 @@ void mdp4_overlay0_done_mddi(int cndx)
 	if (diff > 1) {
 		/*
 		 * two overlay_done and none dmas_done yet
-		 * let dmas_done kickoff dmap
+		 * let dmas_done kickoff dmas
 		 * and put pipe_commit to wait
 		 */
 		vctrl->blt_wait = 1;
@@ -650,7 +650,7 @@ void mdp4_overlay0_done_mddi(int cndx)
 		mdp4_mixer_blend_cfg(pipe->mixer_num);
 
 	mdp4_mddi_blt_dmas_update(pipe);
-	pipe->dmap_cnt++;
+	pipe->dmas_cnt++;
 	mdp4_stat.kickoff_dmas++;
 	vctrl->dmas_koff++;
 	vsync_irq_enable(INTR_DMA_S_DONE, MDP_DMA_S_TERM);
@@ -765,7 +765,7 @@ static void mdp4_mddi_vsync_enable(struct msm_fb_data_type *mfd,
 		/*
 		 * adjust start position and threshold to make sure
 		 * write ptr follows read pts (TE is effective), and
-		 * at the same write is not throttled(shorter dmap
+		 * at the same write is not throttled(shorter dmas
 		 * time)
 		 */
 		if (vsync_start_y_adjust <= pipe->dst_y)
