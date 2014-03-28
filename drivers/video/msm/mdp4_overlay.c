@@ -618,7 +618,7 @@ void mdp4_overlay_dmas_xy(struct mdp4_overlay_pipe *pipe)
 		bpp = 3; /* overlay output is RGB888 */
 #endif
 		off = 0;
-		if (pipe->ov_cnt & 0x01)
+		if (pipe->dmas_cnt & 0x01)
 			off = pipe->src_height * pipe->src_width * bpp;
 		MDP_OUTP(MDP_BASE + 0xa0008, pipe->dma_blt_addr + off);
 		/* RGB888, output of overlay blending */

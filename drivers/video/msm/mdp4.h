@@ -367,6 +367,7 @@ struct mdp4_overlay_pipe {
 	uint32 blt_changed;
 	uint32 ov_cnt;
 	uint32 dmap_cnt;
+	uint32 dmas_cnt;
 	uint32 dmae_cnt;
 	uint32 blt_end;
 	uint32 blt_ov_koff;
