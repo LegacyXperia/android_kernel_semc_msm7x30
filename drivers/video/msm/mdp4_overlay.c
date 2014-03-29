@@ -2498,7 +2498,6 @@ struct mdp4_overlay_pipe *mdp4_overlay_pipe_alloc(int ptype, int mixer)
 			    mixer != pipe->mixer_num)
 				continue;
 			init_completion(&pipe->comp);
-			init_completion(&pipe->dmas_comp);
 			pr_debug("%s: pipe=%x ndx=%d num=%d\n", __func__,
 				(int)pipe, pipe->pipe_ndx, pipe->pipe_num);
 			return pipe;
@@ -3207,8 +3206,9 @@ int mdp4_overlay_mdp_perf_req(struct msm_fb_data_type *mfd)
 						   pipe->bw_ib_quota);
 		}
 
-		if (mfd->mdp_rev == MDP_REV_40 &&
-			ctrl->panel_mode & MDP4_PANEL_MDDI)
+		/* If MDDI is using DMA_S, BLT needs to be enabled to support
+		 * multiple hardware pipes. */
+		if (ctrl->panel_mode & MDP4_PANEL_MDDI && !mddi_use_dmap())
 			perf_req->use_ov_blt[MDP4_MIXER0] = 1;
 
 		if (mfd->mdp_rev == MDP_REV_41) {

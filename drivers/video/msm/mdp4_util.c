@@ -561,6 +561,8 @@ irqreturn_t mdp4_isr(int irq, void *ptr)
 		else if (panel & MDP4_PANEL_DSI_CMD)
 			mdp4_dmap_done_dsi_cmd(0);
 #endif
+		else if (panel & MDP4_PANEL_MDDI)
+			mdp4_dmap_done_mddi(0);
 #else
 		else {
 			spin_lock(&mdp_spin_lock);
