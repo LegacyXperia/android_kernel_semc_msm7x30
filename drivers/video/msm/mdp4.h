@@ -381,7 +381,6 @@ struct mdp4_overlay_pipe {
 	struct mdp_overlay_pp_params pp_cfg;
 	struct mdp_overlay req_data;
 	struct completion comp;
-	struct completion dmas_comp;
 	struct mdp4_iommu_pipe_info iommu;
 };
 
@@ -1047,10 +1046,12 @@ static inline void mdp4_unmap_sec_resource(struct msm_fb_data_type *mfd);
 #endif
 
 #ifdef CONFIG_FB_MSM_MDDI
+bool mddi_use_dmap(void);
 void mdp4_mddi_pipe_queue(int cndx, struct mdp4_overlay_pipe *pipe);
 int mdp4_mddi_pipe_commit(int cndx, int wait);
 void mdp4_mddi_vsync_ctrl(struct fb_info *info, int enable);
 void mdp4_mddi_wait4vsync(int cndx);
+void mdp4_dmap_done_mddi(int cndx);
 void mdp4_dmas_done_mddi(int cndx);
 void mdp4_overlay0_done_mddi(int cndx);
 ssize_t mdp4_mddi_show_event(struct device *dev,
