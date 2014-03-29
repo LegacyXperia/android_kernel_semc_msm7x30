@@ -646,9 +646,6 @@ void mdp4_overlay0_done_mddi(int cndx)
 		return;
 	}
 
-	if (mdp_rev <= MDP_REV_41)
-		mdp4_mixer_blend_cfg(pipe->mixer_num);
-
 	mdp4_mddi_blt_dmas_update(pipe);
 	pipe->dmas_cnt++;
 	mdp4_stat.kickoff_dmas++;
