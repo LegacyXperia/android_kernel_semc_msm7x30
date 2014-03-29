@@ -965,7 +965,6 @@ static void mdp4_overlay_update_mddi(struct msm_fb_data_type *mfd)
 			printk(KERN_INFO "%s: format2type failed\n", __func__);
 
 		vctrl->base_pipe = pipe; /* keep it */
-		mdp4_init_writeback_buf(mfd, MDP4_MIXER0);
 		pipe->ov_blt_addr = 0;
 		pipe->dma_blt_addr = 0;
 	} else {
