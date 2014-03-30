@@ -181,7 +181,7 @@ int msm_fb_cursor(struct fb_info *info, struct fb_cursor *cursor)
 
 static int msm_fb_resource_initialized;
 
-#ifndef CONFIG_FB_BACKLIGHT
+#ifdef CONFIG_FB_BACKLIGHT
 static int lcd_backlight_registered;
 
 static void msm_fb_set_bl_brightness(struct led_classdev *led_cdev,
@@ -475,8 +475,6 @@ static int msm_fb_probe(struct platform_device *pdev)
 		printk(KERN_ERR "pm_runtime: fail to set active.\n");
 	pm_runtime_enable(mfd->fbi->dev);
 #ifdef CONFIG_FB_BACKLIGHT
-	msm_fb_config_backlight(mfd);
-#else
 	/* android supports only one lcd-backlight/lcd for now */
 	if (!lcd_backlight_registered) {
 		if (led_classdev_register(&pdev->dev, &backlight_led))
@@ -552,9 +550,6 @@ static int msm_fb_remove(struct platform_device *pdev)
 	unregister_framebuffer(mfd->fbi);
 
 #ifdef CONFIG_FB_BACKLIGHT
-	/* remove /sys/class/backlight */
-	backlight_device_unregister(mfd->fbi->bl_dev);
-#else
 	if (lcd_backlight_registered) {
 		lcd_backlight_registered = 0;
 		led_classdev_unregister(&backlight_led);
