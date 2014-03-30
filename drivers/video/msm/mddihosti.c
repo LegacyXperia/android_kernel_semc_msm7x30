@@ -26,10 +26,6 @@
 #include "mddihost.h"
 #include "mddihosti.h"
 
-#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
-#define FEATURE_MDDI_DISABLE_REVERSE
-#endif
-
 #define FEATURE_MDDI_UNDERRUN_RECOVERY
 #ifndef FEATURE_MDDI_DISABLE_REVERSE
 static void mddi_read_rev_packet(byte *data_ptr);

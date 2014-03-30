@@ -169,6 +169,10 @@ config FB_MSM_MDDI_AUTO_DETECT
 	select FB_MSM_MDDI
 	default n
 
+config FB_MSM_MDDI_DISABLE_REVERSE
+	bool "DISABLE REVERSE"
+	default n
+
 config FB_MSM_LCDC_AUTO_DETECT
 	bool
 	select FB_MSM_LCDC
@@ -588,8 +592,7 @@ config FB_MSM_MDDI_PANEL_AUTO_DETECT
 	bool "MDDI Panel Auto Detect"
 	select FB_MSM_MDDI_AUTO_DETECT
 	---help---
-	  Support for MDDI panel auto detect.
-	  This also enables MDDI reverse link.
+	  Support for MDDI panel auto detect
 
 config FB_MSM_LCDC_PANEL_AUTO_DETECT
 	bool "LCDC Panel Auto Detect"
