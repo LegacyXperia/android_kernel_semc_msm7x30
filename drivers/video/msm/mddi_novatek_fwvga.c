@@ -24,7 +24,6 @@
 #include "mddihost.h"
 #include "mddihosti.h"
 #include "mddi_nt_panel.h"
-#include "mdp4.h"
 #define write_client_reg(__X, __Y) \
   mddi_queue_register_write(__X, __Y, TRUE, 0)
 
@@ -88,42 +87,6 @@ static struct device_attribute novatek_dev_attr_type = {
 		.mode = 0444,
 	},
 	.show = novatek_type_show,
-};
-
-static ssize_t novatek_vsync_store(struct device *dev,
-		struct device_attribute *attr, const char *buf, size_t size)
-{
-	int ret;
-	unsigned long data;
-	struct platform_device *pdev = NULL;
-	struct novatek_record *rd;
-	struct msm_fb_panel_data *panel_data;
-	struct msm_panel_info *pinfo;
-
-	pdev = container_of(dev, struct platform_device, dev);
-	if (!pdev)
-		return -ENOMEM;
-	rd = platform_get_drvdata(pdev);
-	panel_data = rd->panel->pinfo->get_panel_info();
-	pinfo = &panel_data->panel_info;
-
-	ret = strict_strtoul(buf, 10, &data);
-	data = (data >> 16) & 0xffff;
-
-	if ((MIN_REF_RATE < data) && (data < MAX_REF_RATE)) {
-		pinfo->lcd.refx100 = 100000000 / data;
-		mdp_vsync_config_update(pinfo);
-	}
-	ret = strnlen(buf, size);
-	return ret;
-}
-
-static struct device_attribute novatek_dev_attr_vsync = {
-	.attr = {
-		.name = "vsync",
-		.mode = 0200,
-	},
-	.store = novatek_vsync_store,
 };
 
 static void hr_msleep(int ms)
@@ -460,7 +423,6 @@ static int __devexit novatek_controller_remove(struct platform_device *pdev)
 {
 	struct novatek_record *rd;
 
-	device_remove_file(&pdev->dev, &novatek_dev_attr_vsync);
 	rd = platform_get_drvdata(pdev);
 
 	/* there's no msm_fb_remove_device :/ */
@@ -523,8 +485,7 @@ static int __devinit novatek_controller_probe(struct platform_device *pdev)
 	panel_data->power_on_panel_at_pan = 0;
 
 	pinfo = &panel_data->panel_info;
-	pinfo->width = rd->panel->width;
-	pinfo->height = rd->panel->height;
+	MSM_FB_SINGLE_MODE_PANEL(pinfo);
 	pinfo->lcd.rev = rd->panel->mddi_type;
 
 	dev_info(&pdev->dev, "Using MDDI type %d\n", pinfo->lcd.rev);
@@ -558,9 +519,6 @@ static int __devinit novatek_controller_probe(struct platform_device *pdev)
 	if (rc)
 		dev_err(&pdev->dev, "create dev_attr_type failed.\n");
 		/* non-fatal */
-	rc = device_create_file(&pdev->dev, &novatek_dev_attr_vsync);
-	if (rc)
-		dev_err(&pdev->dev, "create dev_attr_type failed.\n");
 	return 0;
 
 err_no_panel:
