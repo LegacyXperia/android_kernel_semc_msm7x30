@@ -26,6 +26,10 @@
 #include "mddihost.h"
 #include "mddihosti.h"
 
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+#define FEATURE_MDDI_DISABLE_REVERSE
+#endif
+
 #define FEATURE_MDDI_UNDERRUN_RECOVERY
 #ifndef FEATURE_MDDI_DISABLE_REVERSE
 static void mddi_read_rev_packet(byte *data_ptr);
@@ -1468,11 +1472,19 @@ static void mddi_host_initialize_registers(mddi_host_type host_idx)
 	/* Turn Around 2 register (= 0x0C) */
 	mddi_host_reg_out(TA2_LEN, MDDI_HOST_TA2_LEN);
 
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+	/* Drive hi register (= 0x1FE) */
+	mddi_host_reg_out(DRIVE_HI, 0x01FE);
+
+	/* Drive lo register (= 0x50) */
+	mddi_host_reg_out(DRIVE_LO, 0x0050);
+#else
 	/* Drive hi register (= 0x96) */
 	mddi_host_reg_out(DRIVE_HI, 0x0096);
 
 	/* Drive lo register (= 0x32) */
 	mddi_host_reg_out(DRIVE_LO, 0x0032);
+#endif
 
 	/* Display wakeup count register (= 0x3c) */
 	mddi_host_reg_out(DISP_WAKE, 0x003c);
