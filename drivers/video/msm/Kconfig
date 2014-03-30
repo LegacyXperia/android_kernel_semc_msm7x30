@@ -164,6 +164,10 @@ config FB_MSM_MDDI_AUTO_DETECT
 	select FB_MSM_MDDI
 	default n
 
+config FB_MSM_MDDI_DISABLE_REVERSE
+	bool "DISABLE REVERSE"
+	default n
+
 config FB_MSM_LCDC_AUTO_DETECT
 	bool
 	select FB_MSM_LCDC
