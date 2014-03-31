@@ -27,6 +27,10 @@ config FB_MSM_LOGO
 	---help---
 	  Show /initlogo.rle during boot.
 
+config FB_MSM_HDPI
+	bool "Increased memory allocation needed for HDPI devices"
+	default n
+
 config FB_MSM_LCDC_HW
 	bool
 	default n
