@@ -204,17 +204,25 @@
 
 #define TOUCH_VDD_VOLTAGE 3050000
 
-#ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
-#define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 3) /* 4bpp * 3 Pages */
+#ifdef CONFIG_FB_MSM_HDPI
+#define DISPLAY_HEIGHT 864
+#define DISPLAY_WIDTH  480
 #else
-#define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 2) /* 4bpp * 2 Pages */
+#define DISPLAY_HEIGHT 480
+#define DISPLAY_WIDTH  320
+#endif
+
+#ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
+#define MSM_FB_PRIM_BUF_SIZE   (DISPLAY_HEIGHT * DISPLAY_WIDTH * 4 * 3) /* 4bpp * 3 Pages */
+#else
+#define MSM_FB_PRIM_BUF_SIZE   (DISPLAY_HEIGHT * DISPLAY_WIDTH * 4 * 2) /* 4bpp * 2 Pages */
 #endif
 
 #define MSM_FB_EXT_BUF_SIZE    0
 
 #ifdef CONFIG_FB_MSM_OVERLAY0_WRITEBACK
 /* width x height x 3 bpp x 2 frame buffer */
-#define MSM_FB_OVERLAY0_WRITEBACK_SIZE roundup((864 * 480 * 3 * 2), 4096)
+#define MSM_FB_OVERLAY0_WRITEBACK_SIZE roundup((DISPLAY_HEIGHT * DISPLAY_WIDTH * 3 * 2), 4096)
 #else
 #define MSM_FB_OVERLAY0_WRITEBACK_SIZE  0
 #endif
