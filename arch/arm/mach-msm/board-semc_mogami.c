@@ -204,10 +204,18 @@
 
 #define TOUCH_VDD_VOLTAGE 3050000
 
+#ifdef CONFIG_FB_MSM_HDPI
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 3) /* 4bpp * 3 Pages */
 #else
 #define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 2) /* 4bpp * 2 Pages */
+#endif
+#else
+#ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
+#define MSM_FB_PRIM_BUF_SIZE   (480 * 320 * 4 * 3) /* 4bpp * 3 Pages */
+#else
+#define MSM_FB_PRIM_BUF_SIZE   (480 * 320 * 4 * 2) /* 4bpp * 2 Pages */
+#endif
 #endif
 
 #define MSM_FB_EXT_BUF_SIZE    0
