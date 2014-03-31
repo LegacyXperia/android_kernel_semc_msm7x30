@@ -1,0 +1,11 @@
+obj-$(CONFIG_MSM_CAMERA) += msm_camera.o msm_v4l2.o msm_axi_qos.o
+obj-$(CONFIG_MSM_CAMERA_FLASH) += flash.o
+obj-$(CONFIG_ARCH_MSM7X30) += msm_vfe31.o msm_io_vfe31.o msm_vpe1.o
+obj-$(CONFIG_SEIX006) += seix006.o seix006_cam_devdrv_table.o
+obj-$(CONFIG_OVM7692) += ovm7692.o ovm7692_reg.o
+obj-$(CONFIG_MT9V114) += mt9v114.o mt9v114_reg.o
+obj-$(CONFIG_SEMC_CAMERA_MODULE) += semc_camera_module.o
+obj-$(CONFIG_SEMC_SUB_CAMERA_MODULE) += semc_sub_camera_module.o
+obj-$(CONFIG_MSM_GEMINI) += msm_gemini_dev.o msm_gemini_sync.o msm_gemini_core.o msm_gemini_hw.o msm_gemini_platform.o
+obj-$(CONFIG_MSM_VPE) += msm_vpe1.o
+obj-$(CONFIG_MSM_VPE_STANDALONE) += msm_vpe1_standalone.o
