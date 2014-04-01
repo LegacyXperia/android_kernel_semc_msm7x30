@@ -28,6 +28,7 @@
 #include <media/msm_camera.h>
 #include <mach/camera.h>
 #include <media/v4l2-ioctl.h>
+#include <linux/module.h>
 /*#include <linux/platform_device.h>*/
 
 #define MSM_V4L2_START_SNAPSHOT _IOWR('V', BASE_VIDIOC_PRIVATE+1, \
