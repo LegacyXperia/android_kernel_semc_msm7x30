@@ -2751,4 +2751,10 @@ config SIMPLE_REMOTE_INVERT_PLUG_DETECTION_STATE
 	  was inserted, but it is high state on some products, so that
 	  we need invert this state on these products.
 
+config SEMC_CAMERA_8MP
+	bool "Increased PMEP_ADSP for 8MP sensors"
+	default n
+	help
+	  Increased PMEP_ADSP for phones with 8MP sensors.
+
 endif
