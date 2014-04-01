@@ -1,6 +1,7 @@
 /* drivers/media/video/msm/semc_sub_camera_module.c
  *
  * Copyright (C) 2010 Sony Ericsson Mobile Communications AB.
+ * Adapted for 3.0 kernel by Vassilis Tsogkas (tsogkas@ceid.upatras.gr)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2, as
@@ -15,6 +16,7 @@
 #include <linux/uaccess.h>
 #include <linux/miscdevice.h>
 #include <linux/spinlock.h>
+#include <linux/module.h>
 #include <media/msm_camera.h>
 #include <mach/gpio.h>
 #include <mach/camera.h>
@@ -75,7 +77,7 @@ struct semc_camera_ctrl_type {
 static uint32_t g_camera_clock_rate = DEFAULT_CLOCK_RATE;
 static struct semc_camera_ctrl_type *g_camera_ctrl;
 static DECLARE_WAIT_QUEUE_HEAD(g_camera_wait_queue);
-static DECLARE_MUTEX(g_camera_sem);
+static DEFINE_SEMAPHORE(g_camera_sem);
 
 static int semc_camera_i2c_read(
 	uint8_t slave_addr,
@@ -345,11 +347,13 @@ static int semc_camera_resource_enable(
 			ret = -ENOENT;
 			break;
 		}
-		ret = vreg_set_level(reg, level);
-		if (SEMC_CHK_ERR(ret)) {
-			SEMC_LOGE("camera_resource_enable vreg=%s level=%d\n",
-				resource->resource.name, level);
-			break;
+		if (strncmp(resource->resource.name, "lvsw1", 5)) {
+			ret = vreg_set_level(reg, level);
+			if (SEMC_CHK_ERR(ret)) {
+				SEMC_LOGE("camera_resource_enable vreg=%s level=%d\n",
+					resource->resource.name, level);
+				break;
+			}
 		}
 		ret = vreg_enable(reg);
 		if (SEMC_CHK_ERR(ret)) {
