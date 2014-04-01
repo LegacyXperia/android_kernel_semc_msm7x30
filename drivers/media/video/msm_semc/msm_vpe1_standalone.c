@@ -21,12 +21,12 @@
 
 #include <linux/uaccess.h>
 #include <linux/interrupt.h>
+#include <linux/module.h>
 #include <mach/irqs.h>
 #include <linux/io.h>
 #define CONFIG_MSM_CAMERA_DEBUG
 #include "msm_vpe1_standalone.h"
-#include <mach/msm_reqs.h>
-#include <linux/pm_qos_params.h>
+#include <linux/pm_qos.h>
 #include <linux/android_pmem.h>
 #include <linux/clk.h>
 #include <mach/clk.h>
