@@ -2,6 +2,7 @@
  *
  * Copyright (C) 2007 Google, Inc.
  * Copyright (c) 2008-2013, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2010 Sony Ericsson Mobile Communications AB.
  * Author: Brian Swetland <swetland@google.com>
  *
  * This software is licensed under the terms of the GNU General Public
@@ -65,6 +66,22 @@ struct msm_camera_device_platform_data {
 	struct msm_bus_scale_pdata *cam_bus_scale_table;
 };
 
+#if defined(CONFIG_BOARD_SEMC_MOGAMI) || defined(CONFIG_BOARD_SEMC_ZEUS)
+enum msm_camera_csi_data_format {
+	CSI_8BIT,
+	CSI_10BIT,
+	CSI_12BIT,
+};
+
+struct msm_camera_csi_params {
+	enum msm_camera_csi_data_format data_format;
+	uint8_t lane_cnt;
+	uint8_t lane_assign;
+	uint8_t settle_cnt;
+	uint8_t dpcm_scheme;
+};
+#endif
+
 #ifdef CONFIG_SENSORS_MT9T013
 struct msm_camera_legacy_device_platform_data {
 	int sensor_reset;
@@ -77,6 +94,23 @@ struct msm_camera_legacy_device_platform_data {
 
 #define MSM_CAMERA_FLASH_NONE 0
 #define MSM_CAMERA_FLASH_LED  1
+
+#if defined(CONFIG_BOARD_SEMC_MOGAMI) || defined(CONFIG_BOARD_SEMC_ZEUS)
+enum msm_camera_sensor_pwr_type {
+	MSM_CAMERA_SENSOR_PWR_NONE,
+	MSM_CAMERA_SENSOR_PWR_GPIO,
+	MSM_CAMERA_SENSOR_PWR_VREG,
+	MSM_CAMERA_SENSOR_PWR_MAX
+};
+
+struct msm_camera_sensor_pwr {
+	enum msm_camera_sensor_pwr_type type;
+	union {
+		const char *name;
+		int number;
+	} resource;
+};
+#endif
 
 #define MSM_CAMERA_FLASH_SRC_PMIC (0x00000001<<0)
 #define MSM_CAMERA_FLASH_SRC_PWM  (0x00000001<<1)
@@ -258,6 +292,9 @@ struct msm_camera_sensor_info {
 	const char *sensor_name;
 	int sensor_reset_enable;
 	int sensor_reset;
+#if defined(CONFIG_BOARD_SEMC_MOGAMI) || defined(CONFIG_BOARD_SEMC_ZEUS)
+	int sub_sensor_reset;
+#endif
 	int sensor_pwd;
 	int vcm_pwd;
 	int vcm_enable;
@@ -269,6 +306,13 @@ struct msm_camera_sensor_info {
 	uint8_t num_resources;
 	struct msm_camera_sensor_flash_data *flash_data;
 	int csi_if;
+#if defined(CONFIG_BOARD_SEMC_MOGAMI) || defined(CONFIG_BOARD_SEMC_ZEUS)
+	struct msm_camera_csi_params csi_params;
+	struct msm_camera_sensor_pwr vcam_io;
+	struct msm_camera_sensor_pwr vcam_sd;
+	struct msm_camera_sensor_pwr vcam_af;
+	struct msm_camera_sensor_pwr vcam_sa;
+#endif
 	struct msm_camera_sensor_strobe_flash_data *strobe_flash_data;
 	char *eeprom_data;
 	enum msm_camera_type camera_type;
