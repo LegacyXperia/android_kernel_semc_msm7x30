@@ -623,6 +623,18 @@ static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
 		.type = "bma150"
 	},
 #endif
+#ifdef CONFIG_SEMC_CAMERA_MODULE
+	{
+		I2C_BOARD_INFO("semc_camera", 0x1A),
+		.type = "semc_camera"
+	},
+#endif
+#ifdef CONFIG_SEMC_SUB_CAMERA_MODULE
+	{
+		I2C_BOARD_INFO("semc_sub_camera", 0x3D),
+		.type = "semc_sub_camera"
+	},
+#endif
 };
 
 #ifdef CONFIG_MSM_CAMERA
@@ -634,11 +646,8 @@ GPIO_CFG(1, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA), /* VCM */
 static uint32_t camera_off_gpio_table[] = {
 	/* parallel CAMERA interfaces */
 	/* RST */
-	GPIO_CFG(0,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
-	/* DAT2 */
-	GPIO_CFG(2,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
-	/* DAT3 */
-	GPIO_CFG(3,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	GPIO_CFG(0,  0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+#if defined(CONFIG_SEMC_SUB_CAMERA_MODULE)
 	/* DAT4 */
 	GPIO_CFG(4,  0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
 	/* DAT5 */
@@ -661,8 +670,13 @@ static uint32_t camera_off_gpio_table[] = {
 	GPIO_CFG(13, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
 	/* VSYNC_IN */
 	GPIO_CFG(14, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+#endif
 	/* MCLK */
 	GPIO_CFG(15, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+#if defined(CONFIG_SEMC_SUB_CAMERA_MODULE)
+	/* CAM_VGA_RST_N */
+	GPIO_CFG(31, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+#endif
 };
 
 static uint32_t camera_on_vcm_gpio_table[] = {
@@ -672,11 +686,8 @@ GPIO_CFG(1, 0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_UP, GPIO_CFG_2MA), /* VCM */
 static uint32_t camera_on_gpio_table[] = {
 	/* parallel CAMERA interfaces */
 	/* RST */
-	GPIO_CFG(0,  0, GPIO_CFG_OUTPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
-	/* DAT2 */
-	GPIO_CFG(2,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
-	/* DAT3 */
-	GPIO_CFG(3,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+	GPIO_CFG(0,  0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+#if defined(CONFIG_SEMC_SUB_CAMERA_MODULE)
 	/* DAT4 */
 	GPIO_CFG(4,  1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
 	/* DAT5 */
@@ -699,8 +710,13 @@ static uint32_t camera_on_gpio_table[] = {
 	GPIO_CFG(13, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
 	/* VSYNC_IN */
 	GPIO_CFG(14, 1, GPIO_CFG_INPUT, GPIO_CFG_PULL_DOWN, GPIO_CFG_2MA),
+#endif
 	/* MCLK */
-	GPIO_CFG(15, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+	GPIO_CFG(15, 1, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_6MA),
+#if defined(CONFIG_SEMC_SUB_CAMERA_MODULE)
+	/* CAM_VGA_RST_N */
+	GPIO_CFG(31, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA),
+#endif
 };
 
 static void config_gpio_table(uint32_t *table, int len)
@@ -759,11 +775,114 @@ struct msm_camera_device_platform_data msm_camera_device_data = {
 	.ioext.csiphy = 0xA6100000,
 	.ioext.csisz  = 0x00000400,
 	.ioext.csiirq = INT_CSI,
-	.ioclk.mclk_clk_rate = 24000000,
-	.ioclk.vfe_clk_rate  = 147456000,
+	.ioclk.mclk_clk_rate = 8000000,
+	.ioclk.vfe_clk_rate  = 192000000,
 };
 
-#ifdef CONFIG_MSM_VPE
+#if defined(CONFIG_SEMC_CAMERA_MODULE) || defined(CONFIG_SEMC_SUB_CAMERA_MODULE)
+static struct msm_camera_sensor_flash_data flash_none = {
+	.flash_type = MSM_CAMERA_FLASH_NONE,
+	.flash_src  = NULL
+ };
+#endif
+
+#ifdef CONFIG_SEMC_CAMERA_MODULE
+static struct msm_camera_sensor_info msm_camera_sensor_semc_camera_data = {
+	.sensor_name      = "semc_camera",
+	.sensor_reset     = 0,
+	.sub_sensor_reset = 31,
+	.sensor_pwd       = 0,
+	.vcm_pwd          = 0,
+	.vcm_enable       = 0,
+	.mclk             = 15,
+	.flash_type       = MSM_CAMERA_FLASH_NONE,
+	.pdata            = &msm_camera_device_data,
+	.resource         = msm_camera_resources,
+	.num_resources    = ARRAY_SIZE(msm_camera_resources),
+	.flash_data       = &flash_none,
+	.csi_if           = 1, /* mipi interface direct */
+	.csi_params       = {
+		.data_format    = CSI_10BIT,
+		.lane_cnt       = 2,
+		.lane_assign    = 0xe4,
+		.settle_cnt     = 25,
+		.dpcm_scheme    = 0
+	},
+	.vcam_io       = {
+		.type = MSM_CAMERA_SENSOR_PWR_VREG,
+		.resource.name = "lvsw1"
+	},
+	.vcam_sd       = {
+		.type = MSM_CAMERA_SENSOR_PWR_VREG,
+		.resource.name = "gp15"
+	},
+	.vcam_sa       = {
+		.type = MSM_CAMERA_SENSOR_PWR_VREG,
+		.resource.name = "gp2"
+	},
+	.vcam_af       = {
+		.type = MSM_CAMERA_SENSOR_PWR_VREG,
+		.resource.name = "gp10"
+	},
+};
+
+static struct platform_device msm_camera_sensor_semc_camera = {
+	.name = "msm_camera_semc_camera",
+	.dev  = {
+		.platform_data = &msm_camera_sensor_semc_camera_data,
+	},
+};
+#endif
+
+#ifdef CONFIG_SEMC_SUB_CAMERA_MODULE
+static struct msm_camera_sensor_info msm_camera_sensor_semc_sub_camera_data = {
+	.sensor_name      = "semc_sub_camera",
+	.sensor_reset     = 0,
+	.sub_sensor_reset = 31,
+	.sensor_pwd       = 0,
+	.vcm_pwd          = 0,
+	.vcm_enable       = 0,
+	.mclk             = 15,
+	.flash_type       = MSM_CAMERA_FLASH_NONE,
+	.pdata            = &msm_camera_device_data,
+	.resource         = msm_camera_resources,
+	.num_resources    = ARRAY_SIZE(msm_camera_resources),
+	.flash_data       = &flash_none,
+	.csi_if           = 0, /* parallel interface */
+	.csi_params       = {
+		.data_format    = 0,
+		.lane_cnt       = 0,
+		.lane_assign    = 0,
+		.settle_cnt     = 0,
+		.dpcm_scheme    = 0
+	},
+	.vcam_io       = {
+		.type = MSM_CAMERA_SENSOR_PWR_VREG,
+		.resource.name = "lvsw1"
+	},
+	.vcam_sd       = {
+		.type = MSM_CAMERA_SENSOR_PWR_VREG,
+		.resource.name = "gp15"
+	},
+	.vcam_sa       = {
+		.type = MSM_CAMERA_SENSOR_PWR_VREG,
+		.resource.name = "gp2"
+	},
+	.vcam_af       = {
+		.type = MSM_CAMERA_SENSOR_PWR_VREG,
+		.resource.name = "gp10"
+	},
+};
+
+static struct platform_device msm_camera_sensor_semc_sub_camera = {
+	.name = "msm_camera_semc_sub_camera",
+	.dev  = {
+		.platform_data = &msm_camera_sensor_semc_sub_camera_data,
+	},
+};
+#endif
+
+#if defined (CONFIG_MSM_VPE) || defined(CONFIG_MSM_VPE_STANDALONE)
 static struct resource msm_vpe_resources[] = {
 	{
 		.start	= 0xAD200000,
@@ -776,9 +895,18 @@ static struct resource msm_vpe_resources[] = {
 		.flags	= IORESOURCE_IRQ,
 	},
 };
-
+#endif
+#ifdef CONFIG_MSM_VPE
 static struct platform_device msm_vpe_device = {
        .name = "msm_vpe",
+       .id   = 0,
+       .num_resources = ARRAY_SIZE(msm_vpe_resources),
+       .resource = msm_vpe_resources,
+};
+#endif
+#ifdef CONFIG_MSM_VPE_STANDALONE
+static struct platform_device msm_vpe_standalone_device = {
+       .name = "msm_vpe_standalone",
        .id   = 0,
        .num_resources = ARRAY_SIZE(msm_vpe_resources),
        .resource = msm_vpe_resources,
@@ -3227,12 +3355,21 @@ static struct platform_device *devices[] __initdata = {
 	&qup_device_i2c,
 	&msm_kgsl_3d0,
 	&msm_kgsl_2d0,
+#ifdef CONFIG_SEMC_CAMERA_MODULE
+	&msm_camera_sensor_semc_camera,
+#endif
+#ifdef CONFIG_SEMC_SUB_CAMERA_MODULE
+	&msm_camera_sensor_semc_sub_camera,
+#endif
 	&msm_device_vidc_720p,
 #ifdef CONFIG_MSM_GEMINI
 	&msm_gemini_device,
 #endif
 #ifdef CONFIG_MSM_VPE
 	&msm_vpe_device,
+#endif
+#ifdef CONFIG_MSM_VPE_STANDALONE
+	&msm_vpe_standalone_device,
 #endif
 #ifdef CONFIG_BATTERY_SEMC_ARCH
 	&bdata_driver,
@@ -3345,8 +3482,8 @@ static void __init msm_device_i2c_init(void)
 
 static struct msm_i2c_platform_data msm_i2c_2_pdata = {
 	.clk_freq = 100000,
-	.rmutex  = 1,
-	.rsl_id = "D:I2C02000022",
+	.rmutex  = 0, // = 1,
+	//.rsl_id = "D:I2C02000022",
 	.msm_i2c_config_gpio = msm_i2c_gpio_config,
 };
 
@@ -3356,7 +3493,7 @@ static void __init msm_device_i2c_2_init(void)
 }
 
 static struct msm_i2c_platform_data qup_i2c_pdata = {
-	.clk_freq = 384000,
+	.clk_freq = 100000,
 	.msm_i2c_config_gpio = qup_i2c_gpio_config,
 };
 
