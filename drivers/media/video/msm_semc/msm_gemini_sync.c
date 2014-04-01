@@ -20,7 +20,7 @@
 #include <linux/sched.h>
 #include <linux/list.h>
 #include <linux/uaccess.h>
-
+#include <linux/slab.h>
 #include <media/msm_gemini.h>
 #include "msm_gemini_sync.h"
 #include "msm_gemini_core.h"

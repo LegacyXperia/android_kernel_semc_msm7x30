@@ -111,6 +111,7 @@ static struct msm_camera_io_ext camio_ext;
 static struct msm_camera_io_clk camio_clk;
 static struct resource *camifpadio, *csiio;
 void __iomem *camifpadbase, *csibase;
+static uint32_t jpeg_clk_rate;
 
 void msm_io_w(u32 data, void __iomem *addr)
 {
@@ -248,7 +249,8 @@ int msm_camio_clk_enable(enum msm_camio_clk_type clktype)
 	case CAMIO_JPEG_CLK:
 		camio_jpeg_clk =
 		clk = clk_get(NULL, "jpeg_clk");
-		clk_set_min_rate(clk, 144000000);
+		jpeg_clk_rate = clk_round_rate(clk, 144000000);
+		clk_set_rate(clk, jpeg_clk_rate);
 		break;
 	case CAMIO_JPEG_PCLK:
 		camio_jpeg_pclk =
@@ -267,8 +269,10 @@ int msm_camio_clk_enable(enum msm_camio_clk_type clktype)
 		break;
 	}
 
-	if (!IS_ERR(clk))
+	if (!IS_ERR(clk)) {
+		clk_prepare(clk);
 		clk_enable(clk);
+	}
 	else
 		rc = -1;
 	return rc;
@@ -333,6 +337,7 @@ int msm_camio_clk_disable(enum msm_camio_clk_type clktype)
 
 	if (!IS_ERR(clk)) {
 		clk_disable(clk);
+		clk_unprepare(clk);
 		clk_put(clk);
 	} else
 		rc = -1;
@@ -353,7 +358,7 @@ void msm_camio_clk_rate_set_2(struct clk *clk, int rate)
 
 void msm_camio_clk_set_min_rate(struct clk *clk, int rate)
 {
-	clk_set_min_rate(clk, rate);
+	clk_set_rate(clk, rate);
 }
 
 #if defined(CONFIG_SEMC_CAMERA_MODULE) || defined(CONFIG_SEMC_SUB_CAMERA_MODULE)
@@ -364,7 +369,7 @@ void msm_camio_cam_mclk_enable(int rate)
 	clk = clk_get(NULL, "cam_m_clk");
 	msm_camio_clk_rate_set_2(clk, rate);
 	if (!IS_ERR(clk))
-		clk_enable(clk);
+		clk_prepare_enable(clk);
 }
 #endif
 

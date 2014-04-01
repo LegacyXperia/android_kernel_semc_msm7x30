@@ -26,8 +26,7 @@
 #endif
 #include <mach/camera.h>
 #include <linux/io.h>
-#include <mach/msm_reqs.h>
-#include <linux/pm_qos_params.h>
+#include <linux/pm_qos.h>
 #include <asm/atomic.h>
 atomic_t irq_cnt;
 

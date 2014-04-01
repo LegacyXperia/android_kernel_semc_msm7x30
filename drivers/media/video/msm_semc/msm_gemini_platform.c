@@ -16,12 +16,11 @@
  */
 
 #include <linux/module.h>
-#include <linux/pm_qos_params.h>
+#include <linux/pm_qos.h>
 #include <linux/clk.h>
 #include <mach/clk.h>
 #include <linux/io.h>
 #include <linux/android_pmem.h>
-#include <mach/msm_reqs.h>
 #include <mach/camera.h>
 
 #include "msm_gemini_platform.h"
