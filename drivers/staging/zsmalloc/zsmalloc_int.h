@@ -110,8 +110,9 @@ enum fullness_group {
 static const int fullness_threshold_frac = 4;
 
 struct mapping_area {
-	char *vm_buf; /* copy buffer for objects that span pages */
-	char *vm_addr; /* address of kmap_atomic()'ed pages */
+	struct vm_struct *vm;
+	pte_t *vm_ptes[2];
+	char *vm_addr;
 };
 
 struct size_class {

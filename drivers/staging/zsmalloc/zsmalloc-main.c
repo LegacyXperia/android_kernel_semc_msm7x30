@@ -425,57 +425,12 @@ static struct page *find_get_zspage(struct size_class *class)
 	return page;
 }
 
-static void zs_copy_map_object(char *buf, struct page *firstpage,
-				int off, int size)
-{
-	struct page *pages[2];
-	int sizes[2];
-	void *addr;
 
-	pages[0] = firstpage;
-	pages[1] = get_next_page(firstpage);
-	BUG_ON(!pages[1]);
-
-	sizes[0] = PAGE_SIZE - off;
-	sizes[1] = size - sizes[0];
-
-	/* disable page faults to match kmap_atomic() return conditions */
-	pagefault_disable();
-
-	/* copy object to per-cpu buffer */
-	addr = kmap_atomic(pages[0]);
-	memcpy(buf, addr + off, sizes[0]);
-	kunmap_atomic(addr);
-	addr = kmap_atomic(pages[1]);
-	memcpy(buf + sizes[0], addr, sizes[1]);
-	kunmap_atomic(addr);
-}
-
-static void zs_copy_unmap_object(char *buf, struct page *firstpage,
-				int off, int size)
-{
-	struct page *pages[2];
-	int sizes[2];
-	void *addr;
-
-	pages[0] = firstpage;
-	pages[1] = get_next_page(firstpage);
-	BUG_ON(!pages[1]);
-
-	sizes[0] = PAGE_SIZE - off;
-	sizes[1] = size - sizes[0];
-
-	/* copy per-cpu buffer to object */
-	addr = kmap_atomic(pages[0]);
-	memcpy(addr + off, buf, sizes[0]);
-	kunmap_atomic(addr);
-	addr = kmap_atomic(pages[1]);
-	memcpy(addr, buf + sizes[0], sizes[1]);
-	kunmap_atomic(addr);
-
-	/* enable page faults to match kunmap_atomic() return conditions */
-	pagefault_enable();
-}
+/*
+ * If this becomes a separate module, register zs_init() with
+ * module_init(), zs_exit with module_exit(), and remove zs_initialized
+*/
+static int zs_initialized;
 
 static int zs_cpu_notifier(struct notifier_block *nb, unsigned long action,
 				void *pcpu)
@@ -486,23 +441,18 @@ static int zs_cpu_notifier(struct notifier_block *nb, unsigned long action,
 	switch (action) {
 	case CPU_UP_PREPARE:
 		area = &per_cpu(zs_map_area, cpu);
-		/*
-		 * Make sure we don't leak memory if a cpu UP notification
-		 * and zs_init() race and both call zs_cpu_up() on the same cpu
-		 */
-		if (area->vm_buf)
-			return 0;
-		area->vm_buf = (char *)__get_free_page(GFP_KERNEL);
-		if (!area->vm_buf)
-			return -ENOMEM;
-		return 0;
+		if (area->vm)
+			break;
+		area->vm = alloc_vm_area(2 * PAGE_SIZE, area->vm_ptes);
+		if (!area->vm)
+			return notifier_from_errno(-ENOMEM);
 		break;
 	case CPU_DEAD:
 	case CPU_UP_CANCELED:
 		area = &per_cpu(zs_map_area, cpu);
-		if (area->vm_buf)
-			free_page((unsigned long)area->vm_buf);
-		area->vm_buf = NULL;
+		if (area->vm)
+			free_vm_area(area->vm);
+		area->vm = NULL;
 		break;
 	}
 
@@ -540,7 +490,7 @@ fail:
 
 struct zs_pool *zs_create_pool(const char *name, gfp_t flags)
 {
-	int i, ovhd_size;
+	int i, error, ovhd_size;
 	struct zs_pool *pool;
 
 	if (!name)
@@ -567,8 +517,27 @@ struct zs_pool *zs_create_pool(const char *name, gfp_t flags)
 
 	}
 
+	/*
+	 * If this becomes a separate module, register zs_init with
+	 * module_init, and remove this block
+	*/
+	if (!zs_initialized) {
+		error = zs_init();
+		if (error)
+			goto cleanup;
+		zs_initialized = 1;
+	}
+
 	pool->flags = flags;
 	pool->name = name;
+
+	error = 0; /* Success */
+
+cleanup:
+	if (error) {
+		zs_destroy_pool(pool);
+		pool = NULL;
+	}
 
 	return pool;
 }
@@ -720,11 +689,22 @@ void *zs_map_object(struct zs_pool *pool, void *handle)
 	if (off + class->size <= PAGE_SIZE) {
 		/* this object is contained entirely within a page */
 		area->vm_addr = kmap_atomic(page);
-		return area->vm_addr + off;
+	} else {
+		/* this object spans two pages */
+		struct page *nextp;
+
+		nextp = get_next_page(page);
+		BUG_ON(!nextp);
+
+
+		set_pte(area->vm_ptes[0], mk_pte(page, PAGE_KERNEL));
+		set_pte(area->vm_ptes[1], mk_pte(nextp, PAGE_KERNEL));
+
+		/* We pre-allocated VM area so mapping can never fail */
+		area->vm_addr = area->vm->addr;
 	}
 
-	zs_copy_map_object(area->vm_buf, page, off, class->size);
-	return area->vm_buf;
+	return area->vm_addr + off;
 }
 EXPORT_SYMBOL_GPL(zs_map_object);
 
@@ -746,10 +726,14 @@ void zs_unmap_object(struct zs_pool *pool, void *handle)
 	off = obj_idx_to_offset(page, obj_idx, class->size);
 
 	area = &__get_cpu_var(zs_map_area);
-	if (off + class->size <= PAGE_SIZE)
+	if (off + class->size <= PAGE_SIZE) {
 		kunmap_atomic(area->vm_addr);
-	else
-		zs_copy_unmap_object(area->vm_buf, page, off, class->size);
+	} else {
+		set_pte(area->vm_ptes[0], __pte(0));
+		set_pte(area->vm_ptes[1], __pte(0));
+		__flush_tlb_one((unsigned long)area->vm_addr);
+		__flush_tlb_one((unsigned long)area->vm_addr + PAGE_SIZE);
+	}
 	put_cpu_var(zs_map_area);
 }
 EXPORT_SYMBOL_GPL(zs_unmap_object);
@@ -765,9 +749,3 @@ u64 zs_get_total_size_bytes(struct zs_pool *pool)
 	return npages << PAGE_SHIFT;
 }
 EXPORT_SYMBOL_GPL(zs_get_total_size_bytes);
-
-module_init(zs_init);
-module_exit(zs_exit);
-
-MODULE_LICENSE("Dual BSD/GPL");
-MODULE_AUTHOR("Nitin Gupta <ngupta@vflare.org>");
