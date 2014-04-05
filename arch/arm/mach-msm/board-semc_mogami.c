@@ -4385,6 +4385,23 @@ static void __init msm7x30_init_early(void)
 	msm7x30_allocate_memory_regions();
 }
 
+#define CMDLINE_SERIALNO "serialno="
+static void __init msm7x30_fixup_sn(char *kernel_cmdline, char *bl_cmdline)
+{
+	char serialno[11];
+	/* Find serialno start position. */
+	char *sn_start = strstr(bl_cmdline,
+		CMDLINE_SERIALNO) + sizeof(CMDLINE_SERIALNO) - 1;
+
+	/* Copy serialno to it's own buffer. */
+	strncpy(serialno, sn_start, ARRAY_SIZE(serialno));
+	serialno[10] = '\0';
+
+	/* Enter the serialno in correct format. */
+	strlcat(kernel_cmdline, " androidboot.serialno=", COMMAND_LINE_SIZE);
+	strlcat(kernel_cmdline, serialno, COMMAND_LINE_SIZE);
+}
+
 static void __init msm7x30_fixup(struct tag *tags, char **cmdline,
 				 struct meminfo *mi)
 {
@@ -4395,6 +4412,14 @@ static void __init msm7x30_fixup(struct tag *tags, char **cmdline,
 	mi->bank[1].size = DDR1_BANK_SIZE;
 	mi->bank[2].start = DDR2_BANK_BASE;
 	mi->bank[2].size = DDR2_BANK_SIZE;
+
+	for (; tags->hdr.size; tags = tag_next(tags)) {
+		if (tags->hdr.tag == ATAG_CMDLINE) {
+			msm7x30_fixup_sn(*cmdline, tags->u.cmdline.cmdline);
+			break;
+		}
+	}
+
 }
 
 MACHINE_START(SEMC_MOGAMI, "mogami")
