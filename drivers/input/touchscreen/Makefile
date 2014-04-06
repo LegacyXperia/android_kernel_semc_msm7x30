@@ -88,6 +88,7 @@ obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_RMI4_DEV)	+= synaptics_rmi_dev.o
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX_FW_UPDATE) 	+= synaptics_fw_update.o
 obj-$(CONFIG_TOUCHSCREEN_CLEARPAD)	+= clearpad_core.o
 obj-$(CONFIG_TOUCHSCREEN_CLEARPAD_I2C)	+= clearpad_i2c.o
+obj-$(CONFIG_TOUCHSCREEN_CY8CTMA300)	+= cy8ctma300_touch.o
 obj-$(CONFIG_TOUCHSCREEN_CY8CTMA300_SPI)	+= cy8ctma300_spi.o
 obj-$(CONFIG_TOUCHSCREEN_CYTTSP_CORE_SEMC)	+= cyttsp_core_semc.o
 obj-$(CONFIG_TOUCHSCREEN_CYTTSP_SPI_SEMC)	+= cyttsp_spi_semc.o
