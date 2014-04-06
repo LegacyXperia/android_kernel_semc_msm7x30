@@ -97,6 +97,10 @@
 #include <mach/semc_charger_usb.h>
 #endif
 
+#ifdef CONFIG_INPUT_BMA150_NG
+#include <linux/bma150_ng.h>
+#endif
+
 #ifdef CONFIG_LEDS_AS3676
 #include <linux/leds-as3676.h>
 #include "leds-semc.h"
@@ -105,6 +109,10 @@
 #ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
 #include <linux/hrtimer.h>
 #include <mach/mddi_novatek_fwvga.h>
+#endif
+
+#ifdef CONFIG_INPUT_BMA150_NG
+#define BMA150_GPIO			51
 #endif
 
 #ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
@@ -329,6 +337,21 @@ static const struct panel_id *novatek_panels[] = {
 
 struct novatek_i2c_pdata novatek_i2c_pdata = {
 	.panels = novatek_panels,
+};
+#endif
+
+#ifdef CONFIG_INPUT_BMA150_NG
+static int bma150_gpio_setup(bool request)
+{
+	if (request)
+		return gpio_request(BMA150_GPIO, "bma150_irq");
+	else
+		gpio_free(BMA150_GPIO);
+	return 0;
+}
+
+struct bma150_platform_data bma150_ng_platform_data = {
+	.gpio_setup = bma150_gpio_setup,
 };
 #endif
 
@@ -1405,6 +1428,14 @@ static struct i2c_board_info msm_i2c_board_info[] = {
 		.platform_data = &max17040_platform_data,
 	},
 #endif
+#ifdef CONFIG_INPUT_BMA150_NG
+	{
+		I2C_BOARD_INFO("bma150", 0x70 >> 1),
+		.irq = MSM_GPIO_TO_INT(BMA150_GPIO),
+		.platform_data = &bma150_ng_platform_data,
+		.type = "bma150"
+	},
+#endif
 };
 
 static struct i2c_board_info msm_marimba_board_info[] = {
@@ -2478,6 +2509,10 @@ static void __init zeus_temp_fixups(void)
 	/* Tweak the NT3550 power */
 	gpio_tlmm_config(GPIO_CFG(NOVATEK_GPIO_RESET, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL,
 				GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+
+	/* The sequencing for AKM & BMA needs to be L10 -> L8 */
+	vreg_helper("gp4", 2600000, 1);  /* ldo10 - BMA150, AK8975B */
+	vreg_helper("gp7", 1800000, 1);  /* ldo08 - BMA150, AK8975B */
 }
 
 static void __init msm7x30_init_nand(void)
