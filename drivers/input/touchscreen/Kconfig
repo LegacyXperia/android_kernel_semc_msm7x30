@@ -1022,6 +1022,13 @@ config TOUCHSCREEN_CLEARPAD_I2C
 	help
 	  Say Y here to enable Synaptics ClearPad I2C touchscreen.
 
+config TOUCHSCREEN_CY8CTMA300
+	default y
+	depends on BOARD_SEMC_ZEUS && SPI
+	tristate "Cypress CY8CTMA300 hardware"
+	help
+	  Capactive touchscreen for SEMC devices using new Cypress hardware.
+
 config TOUCHSCREEN_CY8CTMA300_SPI
 	default n
 	depends on SPI_MASTER
