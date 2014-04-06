@@ -33,8 +33,7 @@
 static void esd_recovery_resume(struct platform_device *pdev);
 static void esd_recovery_init(struct platform_device *pdev);
 #endif
-#define MIN_REF_RATE 14285 /* ref100=70Hz */
-#define MAX_REF_RATE 18182 /* ref100=55Hz */
+
 /*
  * {STANDBY}-------------resume()
  *     ^                    |

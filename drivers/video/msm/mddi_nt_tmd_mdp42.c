@@ -272,8 +272,6 @@ const struct panel_id novatek_panel_id_tmd_mdp42_rev_c = {
 	.regs = { {0xDA00, 0x0F}, {0xDC00, 0x0A} },
 	.pinfo = &novatek_controller_panel,
 	.mddi_type = 1,
-	.width = 51,
-	.height = 89,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
@@ -284,9 +282,6 @@ const struct panel_id novatek_panel_id_tmd_mdp42_rev_d = {
 	.regs = { {0xDA00, 0x0F}, {0xDC00, 0x0B} },
 	.pinfo = &novatek_controller_panel,
 	.mddi_type = 2,
-	.width = 51,
-	.height = 89,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
-

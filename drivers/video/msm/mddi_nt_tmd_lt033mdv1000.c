@@ -206,9 +206,6 @@ const struct panel_id novatek_panel_id_tmd_lt033mdv1000 = {
 	.regs = { {0xDC00, 0x08}, {0xDC00, 0x08} },
 	.pinfo = &novatek_controller_panel,
 	.mddi_type = 2,
-	.width = 41,
-	.height = 73,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
-

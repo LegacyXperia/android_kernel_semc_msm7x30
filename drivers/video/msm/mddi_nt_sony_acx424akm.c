@@ -109,8 +109,6 @@ const struct panel_id novatek_panel_id_sony_acx424akm_type1 = {
 	.regs = { {0xDB00, 0x80}, {0xDC00, 0x02} },
 	.pinfo = &novatek_controller_panel,
 	.mddi_type = 1,
-	.width = 46,
-	.height = 82,
 	.suspend_support = 1,
 	.esd_support = 0,
 };
@@ -120,10 +118,7 @@ const struct panel_id novatek_panel_id_sony_acx424akm = {
 	.reg_count = 2,
 	.regs = { {0xDA00, 0x01}, {0xDC00, 0x02} },
 	.pinfo = &novatek_controller_panel,
-	.width = 46,
-	.height = 82,
 	.mddi_type = 2,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
-

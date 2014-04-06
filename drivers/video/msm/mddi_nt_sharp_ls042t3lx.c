@@ -119,8 +119,6 @@ const struct panel_id novatek_panel_id_sharp_ls042t3lx_type1 = {
 	.regs = { {0xDB00, 0x90}, {0xDC00, 0x01} },
 	.pinfo = &novatek_controller_panel,
 	.mddi_type = 1,
-	.width = 52,
-	.height = 93,
 	.suspend_support = 1,
 	.esd_support = 0, /* disable support due to faulty checksum */
 };
@@ -131,9 +129,6 @@ const struct panel_id novatek_panel_id_sharp_ls042t3lx = {
 	.regs = { {0xDA00, 0x70}, {0xDC00, 0x01} },
 	.pinfo = &novatek_controller_panel,
 	.mddi_type = 2,
-	.width = 52,
-	.height = 93,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
-

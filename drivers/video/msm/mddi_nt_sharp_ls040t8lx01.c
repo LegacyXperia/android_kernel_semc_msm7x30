@@ -228,8 +228,6 @@ const struct panel_id novatek_panel_id_sharp_ls040t8lx01_rev_c_x = {
 	.regs = { {0xDA00, 0x70}, {0xDC00, 0x0A} },
 	.pinfo = &novatek_controller_panel_rev_c,
 	.mddi_type = 1,
-	.width = 51,
-	.height = 89,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
@@ -240,8 +238,6 @@ const struct panel_id novatek_panel_id_sharp_ls040t8lx01_rev_c = {
 	.regs = { {0xDA00, 0x70}, {0xDC00, 0x00} },
 	.pinfo = &novatek_controller_panel_rev_c,
 	.mddi_type = 1,
-	.width = 51,
-	.height = 89,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
@@ -252,9 +248,6 @@ const struct panel_id novatek_panel_id_sharp_ls040t8lx01_rev_d = {
 	.regs = { {0xDA00, 0x70}, {0xDC00, 0x0B} },
 	.pinfo = &novatek_controller_panel_rev_d,
 	.mddi_type = 2,
-	.width = 51,
-	.height = 89,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
-
