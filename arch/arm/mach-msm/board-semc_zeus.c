@@ -32,6 +32,7 @@
 #include <linux/dma-mapping.h>
 #include <linux/regulator/consumer.h>
 
+#include <asm/system_info.h>
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
 #include <asm/setup.h>
@@ -214,6 +215,112 @@ static int vreg_helper(const char *regName, unsigned uv, int enable)
 vreg_configure_err:
 	regulator_put(reg);
 	return rc;
+}
+
+/* GPIO hardware device identification */
+enum board_hwid {
+	BOARD_HWID_UNK,
+	BOARD_HWID_DP1,
+	BOARD_HWID_SP1,
+	BOARD_HWID_DBZ3,
+	BOARD_HWID_SP1_5,
+	BOARD_HWID_SP1_6,
+	BOARD_HWID_DBZ3_1,
+	BOARD_HWID_SP2,
+	BOARD_HWID_DBZ3_2,
+	BOARD_HWID_SP3,
+	BOARD_HWID_AP1,
+	BOARD_HWID_PQ,
+};
+static u8 board_hwid;
+
+/*
+ * Attempts to identify the the hardware ID
+ * of Zeus HW.
+ */
+static void __init zeus_detect_product(void)
+{
+	u8 hwid;
+	const char *pzName[] = {
+		[BOARD_HWID_UNK]    = "Unknown",
+		[BOARD_HWID_DP1]    = "DP1",
+		[BOARD_HWID_SP1]    = "SP1",
+		[BOARD_HWID_DBZ3]   = "DBZ3",
+		[BOARD_HWID_SP1_5]  = "SP1.5",
+		[BOARD_HWID_SP1_6]  = "SP1.6",
+		[BOARD_HWID_DBZ3_1] = "DBZ3.1",
+		[BOARD_HWID_SP2]    = "SP2",
+		[BOARD_HWID_DBZ3_2] = "DBZ3.2",
+		[BOARD_HWID_SP3]    = "SP3",
+		[BOARD_HWID_AP1]    = "AP1",
+		[BOARD_HWID_PQ]     = "PQ",
+	};
+
+	int idmap[] = {
+		BOARD_HWID_UNK,    BOARD_HWID_UNK,	/* 0,1 */
+		BOARD_HWID_UNK,    BOARD_HWID_UNK,	/* 2,3 */
+		BOARD_HWID_UNK,    BOARD_HWID_DBZ3_2,	/* 4,5 */
+		BOARD_HWID_DBZ3_1, BOARD_HWID_DBZ3,	/* 6,7 */
+		BOARD_HWID_DP1,    BOARD_HWID_SP1,	/* 8,9 */
+		BOARD_HWID_SP1_5,  BOARD_HWID_SP1_6,	/* a,b */
+		BOARD_HWID_SP2,    BOARD_HWID_SP3,	/* c,d */
+		BOARD_HWID_AP1,    BOARD_HWID_PQ,	/* e,f */
+	};
+
+	/* Request GPIOs, and set the TLMM in a state where we can read them */
+	gpio_request(43, "hwid_3");
+	gpio_request(148, "hwid_2");
+	gpio_request(149, "hwid_1");
+	gpio_request(150, "hwid_0");
+	gpio_request(38, "hwid_3_ex");
+	gpio_tlmm_config(GPIO_CFG(43, 0,
+			GPIO_CFG_INPUT, GPIO_CFG_PULL_UP,
+			GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+	gpio_tlmm_config(GPIO_CFG(148, 0,
+			GPIO_CFG_INPUT, GPIO_CFG_PULL_UP,
+			GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+	gpio_tlmm_config(GPIO_CFG(149, 0,
+			GPIO_CFG_INPUT, GPIO_CFG_PULL_UP,
+			GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+	gpio_tlmm_config(GPIO_CFG(150, 0,
+			GPIO_CFG_INPUT, GPIO_CFG_PULL_UP,
+			GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+	/* GPIO 38 (NC) pin should be configured as no pull for DBZ3.0x */
+	gpio_tlmm_config(GPIO_CFG(38, 0,
+			GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL,
+			GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+
+	hwid = 0;
+	hwid |= (gpio_get_value(150) & 1) << 0;
+	hwid |= (gpio_get_value(149) & 1) << 1;
+	hwid |= (gpio_get_value(148) & 1) << 2;
+	hwid |= (gpio_get_value(43) & 1) << 3;
+
+	board_hwid = idmap[hwid];
+	system_rev = board_hwid;
+
+	printk(KERN_INFO "Zeus HWID: 0x%x (%s)\n", hwid, pzName[board_hwid]);
+
+	/* Reconfigure the GPIOs so that we won't leak current */
+	gpio_tlmm_config(GPIO_CFG(43, 0,
+			GPIO_CFG_INPUT, GPIO_CFG_NO_PULL,
+			GPIO_CFG_2MA), GPIO_CFG_DISABLE);
+	gpio_tlmm_config(GPIO_CFG(148, 0,
+			GPIO_CFG_INPUT, GPIO_CFG_NO_PULL,
+			GPIO_CFG_2MA), GPIO_CFG_DISABLE);
+	gpio_tlmm_config(GPIO_CFG(149, 0,
+			GPIO_CFG_INPUT, GPIO_CFG_NO_PULL,
+			GPIO_CFG_2MA), GPIO_CFG_DISABLE);
+	gpio_tlmm_config(GPIO_CFG(150, 0,
+			GPIO_CFG_INPUT, GPIO_CFG_NO_PULL,
+			GPIO_CFG_2MA), GPIO_CFG_DISABLE);
+
+	/* Free our allocations */
+	gpio_free(43);
+	gpio_free(148);
+	gpio_free(149);
+	gpio_free(150);
+	gpio_free(38);
 }
 
 struct pm8xxx_gpio_init_info {
@@ -2726,6 +2833,7 @@ static void __init msm7x30_init(void)
 	snddev_hsed_voltage_init();
 	aux_pcm_gpio_init();
 #endif
+	zeus_detect_product();
 
 	i2c_register_board_info(0, msm_i2c_board_info,
 			ARRAY_SIZE(msm_i2c_board_info));
