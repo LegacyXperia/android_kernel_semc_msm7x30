@@ -79,6 +79,11 @@
 #include <mach/qdsp5v2/audio_dev_ctl.h>
 #include "smd_private.h"
 
+#ifdef CONFIG_ION_MSM
+#include <linux/msm_ion.h>
+#include <mach/ion.h>
+#endif
+
 #include "board-msm7x30-regulator.h"
 #include "pm.h"
 
