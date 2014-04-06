@@ -132,17 +132,6 @@ static void auo_lcd_dbc_off(void)
 	}
 }
 
-static void auo_lcd_window_address_set(enum lcd_registers reg,
-						u16 start, u16 stop)
-{
-	uint32 para;
-
-	para = start;
-	para = (para << 16) | (start + stop);
-	para = swab32(para);
-	write_client_reg_nbr(reg, para, 0, 0, 0, 1);
-}
-
 static uint32 reg_disctl[5] = {0x08034E3B, 0x00080808, 0x00000808,
 			0x08540000, 0x00080808};
 
@@ -233,16 +222,6 @@ static void auo_lcd_driver_init(void)
 
 	/* CASET */
 	write_client_reg_nbr(0x2A, 0x3F010000, 0, 0, 0, 1);
-}
-
-static void auo_lcd_window_adjust(uint16 x1, uint16 x2,
-					uint16 y1, uint16 y2)
-{
-	auo_lcd_window_address_set(LCD_REG_COLUMN_ADDRESS, x1, x2);
-	auo_lcd_window_address_set(LCD_REG_PAGE_ADDRESS, y1, y2);
-
-	/* Workaround: 0x3Ch at start of column bug */
-	write_client_reg_nbr(0x3C, 0, 0, 0, 0, 1);
 }
 
 static void auo_lcd_enter_sleep(void)
@@ -604,7 +583,6 @@ static int mddi_auo_lcd_probe(struct platform_device *pdev)
 		panel_data->on = mddi_auo_ic_on_panel_off;
 		panel_data->controller_on_panel_on = mddi_auo_ic_on_panel_on;
 		panel_data->off = mddi_auo_ic_off_panel_off;
-		panel_data->window_adjust = auo_lcd_window_adjust;
 		panel_data->power_on_panel_at_pan = 0;
 
 		pdev->dev.platform_data = &auo_hvga_panel_data;
@@ -662,8 +640,7 @@ static void __init msm_mddi_auo_hvga_display_device_init(void)
 	panel_data->panel_info.fb_num = 2;
 	panel_data->panel_info.bl_max = 4;
 	panel_data->panel_info.bl_min = 1;
-	panel_data->panel_info.width = 42;
-	panel_data->panel_info.height = 63;
+	MSM_FB_SINGLE_MODE_PANEL(&panel_data->panel_info);
 
 	panel_data->panel_info.lcd.vsync_enable = TRUE;
 	panel_data->panel_info.lcd.refx100 = REFRESH_RATE;
