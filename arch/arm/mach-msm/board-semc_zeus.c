@@ -82,6 +82,11 @@
 
 #include "keypad-semc.h"
 
+#ifdef CONFIG_LEDS_AS3676
+#include <linux/leds-as3676.h>
+#include "leds-semc.h"
+#endif
+
 #define MSM_PMEM_SF_SIZE	0x1700000
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
 #define MSM_FB_PRIM_BUF_SIZE   (864 * 480 * 4 * 3) /* 4bpp * 3 Pages */
@@ -1166,6 +1171,13 @@ static struct platform_device android_usb_device = {
 #endif
 
 static struct i2c_board_info msm_i2c_board_info[] = {
+#ifdef CONFIG_LEDS_AS3676
+	{
+		/* Config-spec is 8-bit = 0x80, src-code need 7-bit => 0x40 */
+		I2C_BOARD_INFO("as3676", 0x80 >> 1),
+		.platform_data = &as3676_platform_data,
+	},
+#endif
 };
 
 static struct i2c_board_info msm_marimba_board_info[] = {
