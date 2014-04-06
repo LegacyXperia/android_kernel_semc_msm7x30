@@ -122,6 +122,10 @@
 #include <mach/mddi_novatek_fwvga.h>
 #endif
 
+#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300
+#include <linux/spi/cypress_touch.h>
+#endif
+
 #ifdef CONFIG_SENSORS_AKM8975
 #define AKM8975_GPIO			92
 #endif
@@ -131,6 +135,11 @@
 
 #ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
 #define NOVATEK_GPIO_RESET		157
+#endif
+
+#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300
+#define CYPRESS_TOUCH_GPIO_RESET	40
+#define CYPRESS_TOUCH_GPIO_IRQ		42
 #endif
 
 #define MSM_PMEM_SF_SIZE	0x1700000
@@ -1541,6 +1550,53 @@ static struct platform_device novatek_device = {
 };
 #endif
 
+#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300
+static struct cypress_callback *cy_callback;
+
+static void cy_register_cb(struct cypress_callback *cy)
+{
+	cy_callback = cy;
+}
+
+static struct cypress_touch_platform_data cypress_touch_data = {
+	.x_min		= 0,
+	.x_max		= 479,
+	.y_min		= 0,
+	.y_max		= 853,
+	.irq		= MSM_GPIO_TO_INT(CYPRESS_TOUCH_GPIO_IRQ),
+	.gpio_irq_pin	= CYPRESS_TOUCH_GPIO_IRQ,
+	.gpio_reset_pin	= CYPRESS_TOUCH_GPIO_RESET,
+	.reset_polarity	= 1,
+	.irq_polarity	= IRQF_TRIGGER_FALLING,
+	.no_fw_update = 0,
+	.register_cb	= cy_register_cb,
+};
+
+void charger_connected(int on)
+{
+	if (cy_callback && cy_callback->cb)
+		cy_callback->cb(cy_callback, on);
+}
+
+static void cypress_touch_gpio_init(void)
+{
+	vreg_helper("gp13", 3000000, 1); /* ldo20 */
+
+	/* Avoid writing firmward on SP3 */
+	if (BOARD_HWID_SP3 == board_hwid)
+		cypress_touch_data.no_fw_update = 1;
+	else
+		cypress_touch_data.no_fw_update = 0;
+
+	gpio_request(CYPRESS_TOUCH_GPIO_RESET, "cy8_reset");
+	/* intial reset */
+	msleep(1);
+	gpio_set_value(CYPRESS_TOUCH_GPIO_RESET,
+			cypress_touch_data.reset_polarity);
+	gpio_free(CYPRESS_TOUCH_GPIO_RESET);
+}
+#endif
+
 #ifdef CONFIG_SEMC_CHARGER_USB_ARCH
 static char *semc_chg_usb_supplied_to[] = {
 	MAX17040_NAME,
@@ -1655,6 +1711,19 @@ static struct i2c_board_info msm_i2c_board_info[] = {
 		I2C_BOARD_INFO(AKM8975_I2C_NAME, 0x18 >> 1),
 		.irq = MSM_GPIO_TO_INT(AKM8975_GPIO),
 		.platform_data = &akm8975_platform_data,
+	},
+#endif
+};
+
+static struct spi_board_info msm_spi_board_info[] __initdata = {
+#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300
+	{
+		.modalias	= "cypress_touchscreen",
+		.mode		= SPI_MODE_0,
+		.platform_data	= &cypress_touch_data,
+		.bus_num	= 0,
+		.chip_select	= 0,
+		.max_speed_hz	= 1 * 1000 * 1000,
 	},
 #endif
 };
@@ -3054,6 +3123,9 @@ static void __init msm7x30_init(void)
 	aux_pcm_gpio_init();
 #endif
 	zeus_detect_product();
+#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300
+	cypress_touch_gpio_init();
+#endif /* CONFIG_TOUCHSCREEN_CY8CTMA300 */
 
 	i2c_register_board_info(0, msm_i2c_board_info,
 			ARRAY_SIZE(msm_i2c_board_info));
@@ -3063,6 +3135,9 @@ static void __init msm7x30_init(void)
 
 	i2c_register_board_info(4 /* QUP ID */, msm_camera_boardinfo,
 				ARRAY_SIZE(msm_camera_boardinfo));
+
+	spi_register_board_info(msm_spi_board_info,
+				ARRAY_SIZE(msm_spi_board_info));
 
 #ifdef CONFIG_I2C_SSBI
 	msm_device_ssbi7.dev.platform_data = &msm_i2c_ssbi7_pdata;
