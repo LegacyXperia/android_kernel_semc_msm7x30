@@ -134,6 +134,10 @@
 #include <linux/spi/cypress_touch.h>
 #endif
 
+#ifdef CONFIG_JOYSTICK_SYNAPTICS
+#include <linux/i2c/synaptics_touchpad.h>
+#endif
+
 #ifdef CONFIG_SENSORS_AKM8975
 #define AKM8975_GPIO			92
 #endif
@@ -151,6 +155,10 @@
 #ifdef CONFIG_TOUCHSCREEN_CY8CTMA300
 #define CYPRESS_TOUCH_GPIO_RESET	40
 #define CYPRESS_TOUCH_GPIO_IRQ		42
+#endif
+
+#ifdef CONFIG_JOYSTICK_SYNAPTICS
+#define SYNAPTICS_TOUCHPAD_GPIO		33
 #endif
 
 #ifdef CONFIG_FB_MSM_TRIPLE_BUFFER
@@ -562,6 +570,34 @@ struct bma150_platform_data bma150_ng_platform_data = {
 };
 #endif
 
+#ifdef CONFIG_JOYSTICK_SYNAPTICS
+static struct msm_gpio synaptics_gpio_config_data[] = {
+	{ GPIO_CFG(SYNAPTICS_TOUCHPAD_GPIO, 0, GPIO_CFG_INPUT, GPIO_CFG_PULL_UP,
+		GPIO_CFG_2MA), "synaptics_touchpad_irq" },
+};
+
+static int synaptics_touchpad_gpio_setup(void)
+{
+	int rc;
+
+	rc = msm_gpios_request_enable(synaptics_gpio_config_data,
+		ARRAY_SIZE(synaptics_gpio_config_data));
+
+	return rc;
+}
+
+static void synaptics_touchpad_gpio_teardown(void)
+{
+	msm_gpios_disable_free(synaptics_gpio_config_data,
+		ARRAY_SIZE(synaptics_gpio_config_data));
+}
+
+static struct synaptics_touchpad_platform_data synaptics_touchpad_data = {
+	.gpio_setup	= synaptics_touchpad_gpio_setup,
+	.gpio_teardown	= synaptics_touchpad_gpio_teardown,
+};
+#endif
+
 #ifdef CONFIG_INPUT_GP2A_SEMC
 static struct msm_gpio gp2a_gpio_config_data[] = {
 	{ GPIO_CFG(GP2A_GPIO, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), "gp2a_vo" },
@@ -598,6 +634,13 @@ static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
 		I2C_BOARD_INFO(MDDI_NOVATEK_I2C_NAME, 0x98 >> 1),
 		.type = MDDI_NOVATEK_I2C_NAME,
 		.platform_data = &novatek_i2c_pdata,
+	},
+#endif
+#ifdef CONFIG_JOYSTICK_SYNAPTICS
+	{
+		I2C_BOARD_INFO("synaptics_touchpad", 0x40 >> 1),
+		.irq		= MSM_GPIO_TO_INT(SYNAPTICS_TOUCHPAD_GPIO),
+		.platform_data	= &synaptics_touchpad_data,
 	},
 #endif
 #ifdef CONFIG_INPUT_GP2A_SEMC
@@ -2969,6 +3012,9 @@ static void __init zeus_temp_fixups(void)
 	/* The sequencing for AKM & BMA needs to be L10 -> L8 */
 	vreg_helper("gp4", 2600000, 1);  /* ldo10 - BMA150, AK8975B */
 	vreg_helper("gp7", 1800000, 1);  /* ldo08 - BMA150, AK8975B */
+
+	vreg_helper("wlan", 1800000, 1); /* ldo13 - touchpad VDIO */
+	vreg_helper("gp10", 2800000, 1); /* ldo16 - touchpad */
 }
 
 static void __init msm7x30_init_nand(void)
