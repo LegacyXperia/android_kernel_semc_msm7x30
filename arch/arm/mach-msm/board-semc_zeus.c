@@ -9,6 +9,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
+ * Adapted for SEMC 2011 devices by Michael Bestas (mikeioannina@gmail.com)
  */
 
 #include <linux/kernel.h>
@@ -99,6 +100,15 @@
 #ifdef CONFIG_LEDS_AS3676
 #include <linux/leds-as3676.h>
 #include "leds-semc.h"
+#endif
+
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+#include <linux/hrtimer.h>
+#include <mach/mddi_novatek_fwvga.h>
+#endif
+
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+#define NOVATEK_GPIO_RESET		157
 #endif
 
 #define MSM_PMEM_SF_SIZE	0x1700000
@@ -304,7 +314,32 @@ static struct msm_ssbi_platform_data msm7x30_ssbi_pm8058_pdata = {
 };
 #endif
 
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+static const struct panel_id *novatek_panels[] = {
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_TMD_MDP42
+	&novatek_panel_id_tmd_mdp42_rev_c,
+	&novatek_panel_id_tmd_mdp42_rev_d,
+#endif
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_SHARP_LS040T8LX01
+	&novatek_panel_id_sharp_ls040t8lx01_rev_c_x,	/* SP2.1 support */
+	&novatek_panel_id_sharp_ls040t8lx01_rev_c,
+	&novatek_panel_id_sharp_ls040t8lx01_rev_d,
+#endif
+};
+
+struct novatek_i2c_pdata novatek_i2c_pdata = {
+	.panels = novatek_panels,
+};
+#endif
+
 static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+	{
+		I2C_BOARD_INFO(MDDI_NOVATEK_I2C_NAME, 0x98 >> 1),
+		.type = MDDI_NOVATEK_I2C_NAME,
+		.platform_data = &novatek_i2c_pdata,
+	},
+#endif
 };
 
 #ifdef CONFIG_MSM_CAMERA
@@ -1228,6 +1263,72 @@ static struct platform_device android_usb_device = {
 };
 #endif
 
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+static void hr_usleep(int us)
+{
+	struct timespec req_time;
+	long ret;
+
+	req_time.tv_sec = us / 1000000;
+	req_time.tv_nsec = (us % 1000000) * 1000;
+
+	ret = hrtimer_nanosleep(&req_time, NULL, HRTIMER_MODE_REL,
+							CLOCK_MONOTONIC);
+	if (ret != 0)
+		printk(KERN_ERR "%s: nanosleep failed, ret = %ld\n", __func__,
+									ret);
+}
+
+static void hr_msleep(int ms)
+{
+	hr_usleep(1000 * ms);
+}
+
+static int novatek_power(int on)
+{
+	static int enabled_once;
+	int rc = 0;
+
+	if (on) {
+		if (!enabled_once) {
+			rc = vreg_helper("gp6", 2850000, 1);  /* ldo15 */
+			if (rc)
+				goto out;
+			rc = vreg_helper("gp9", 1800000, 1);  /* ldo12 */
+			if (rc) {
+				vreg_helper("gp6", 2850000, 0);
+				goto out;
+			}
+			hr_usleep(21); /* spec says > 20us */
+			gpio_set_value(NOVATEK_GPIO_RESET, 1);
+			hr_msleep(11); /* spec says > 11ms */
+			enabled_once = 1;
+		} else {
+			gpio_set_value(NOVATEK_GPIO_RESET, 0);
+			hr_msleep(4); /* spec says: > 4ms */
+			gpio_set_value(NOVATEK_GPIO_RESET, 1);
+			hr_msleep(11); /* spec says: > 10 ms */
+		}
+	}
+	/* Do not do anything at power off */
+out:
+	return rc;
+}
+
+static struct novatek_fwvga_platform_data novatek_platform_data = {
+	.power = novatek_power,
+	.reset = NULL,
+};
+
+static struct platform_device novatek_device = {
+	.name	= MDDI_NOVATEK_FWVGA_NAME,
+	.id	= -1,
+	.dev	= {
+		.platform_data = &novatek_platform_data,
+	}
+};
+#endif
+
 #ifdef CONFIG_SEMC_CHARGER_USB_ARCH
 static char *semc_chg_usb_supplied_to[] = {
 	MAX17040_NAME,
@@ -1947,6 +2048,9 @@ static struct platform_device *devices[] __initdata = {
 #if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
 	&msm_device_tsif,
 #endif
+#ifdef CONFIG_FB_MSM_MDDI_NOVATEK_FWVGA
+	&novatek_device,
+#endif
 
 #if defined(CONFIG_CRYPTO_DEV_QCRYPTO) || \
 		defined(CONFIG_CRYPTO_DEV_QCRYPTO_MODULE)
@@ -2365,6 +2469,17 @@ out3:
 
 }
 
+/*
+ * Temporary place for hardware initialization until the devices in question
+ * gets proper drivers
+ */
+static void __init zeus_temp_fixups(void)
+{
+	/* Tweak the NT3550 power */
+	gpio_tlmm_config(GPIO_CFG(NOVATEK_GPIO_RESET, 0, GPIO_CFG_OUTPUT, GPIO_CFG_NO_PULL,
+				GPIO_CFG_2MA), GPIO_CFG_ENABLE);
+}
+
 static void __init msm7x30_init_nand(void)
 {
 	char *build_id;
@@ -2485,6 +2600,7 @@ static void __init msm7x30_init(void)
 	platform_add_devices(msm_footswitch_devices,
 			     msm_num_footswitch_devices);
 	platform_add_devices(devices, ARRAY_SIZE(devices));
+	zeus_temp_fixups();
 #ifdef CONFIG_SEMC_CHARGER_USB_ARCH
 	semc_chg_usb_set_supplicants(semc_chg_usb_supplied_to,
 				  ARRAY_SIZE(semc_chg_usb_supplied_to));
