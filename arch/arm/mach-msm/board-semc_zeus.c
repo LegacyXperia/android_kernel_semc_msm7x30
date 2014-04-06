@@ -85,6 +85,13 @@
 #include "gpio-semc.h"
 #include "keypad-semc.h"
 
+#ifdef CONFIG_SIMPLE_REMOTE_PLATFORM
+#include <mach/simple_remote_msm7x30_pf.h>
+#endif
+#ifdef CONFIG_SEMC_RPC_SERVER_HANDSET
+#include <mach/semc_rpc_server_handset.h>
+#endif
+
 #ifdef CONFIG_BATTERY_ZEUS
 #include <linux/max17040.h>
 #endif
@@ -322,6 +329,75 @@ static void __init zeus_detect_product(void)
 	gpio_free(150);
 	gpio_free(38);
 }
+
+#ifdef CONFIG_SEMC_RPC_SERVER_HANDSET
+static struct input_dev *input_dev_pwr_key = NULL;
+static void msm_pmic_pwr_key_rpc_callback(uint32_t key, uint32_t event)
+{
+	if (!input_dev_pwr_key)
+		return;
+	switch (key) {
+	case HS_PWR_K:
+		key = KEY_POWER;
+		break;
+	case HS_END_K:
+		key = KEY_END;
+		break;
+	default:
+		return;
+	}
+	input_report_key(input_dev_pwr_key, key, event != HS_REL_K);
+	input_sync(input_dev_pwr_key);
+}
+
+static int __init msm_pmic_pwr_key_init(void)
+{
+	input_dev_pwr_key = input_allocate_device();
+	if (!input_dev_pwr_key) {
+		printk(KERN_ERR "%s: Error, unable to alloc pwr key device\n",
+			__func__);
+		return -1;
+	}
+	input_dev_pwr_key->name = "msm_pmic_pwr_key";
+	input_dev_pwr_key->phys = "semc_rpc_server_handset";
+	input_set_capability(input_dev_pwr_key, EV_KEY, KEY_POWER);
+	input_set_capability(input_dev_pwr_key, EV_KEY, KEY_END);
+	if (input_register_device(input_dev_pwr_key)) {
+		printk(KERN_ERR "%s: Error, unable to reg pwr key device\n",
+			__func__);
+		input_free_device(input_dev_pwr_key);
+		return -1;
+	}
+	return 0;
+}
+module_init(msm_pmic_pwr_key_init);
+
+/*
+ * Add callbacks here. Every defined callback will receive
+ * all events. The types are defined in the file
+ * semc_rpc_server_handset.h
+ */
+
+static handset_cb_array_t semc_rpc_hs_callbacks = {
+	&msm_pmic_pwr_key_rpc_callback,
+#ifdef CONFIG_SIMPLE_REMOTE_PLATFORM
+	&simple_remote_pf_button_handler,
+#endif
+};
+
+static struct semc_handset_data semc_rpc_hs_data = {
+	.callbacks = semc_rpc_hs_callbacks,
+	.num_callbacks = ARRAY_SIZE(semc_rpc_hs_callbacks),
+};
+
+static struct platform_device semc_rpc_handset_device = {
+	.name = SEMC_HANDSET_DRIVER_NAME,
+	.id = -1,
+	.dev = {
+		.platform_data = &semc_rpc_hs_data,
+	},
+};
+#endif
 
 struct pm8xxx_gpio_init_info {
 	unsigned			gpio;
@@ -2131,6 +2207,144 @@ static struct msm_panel_common_pdata mdp_pdata = {
 	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
 };
 
+#ifdef CONFIG_SIMPLE_REMOTE_PLATFORM
+#define PLUG_DET_ENA_PIN 80
+#define PLUG_DET_READ_PIN 26
+#define MODE_SWITCH_PIN -1
+
+int simple_remote_pf_initialize_gpio(struct simple_remote_platform_data *data)
+{
+	int err = 0;
+	int i;
+
+	if (!data || -1 == data->headset_detect_enable_pin) {
+		printk(KERN_ERR
+		       "*** %s - Error: Invalid inparameter (GPIO Pins)."
+		       " Aborting!\n", __func__);
+		return -EIO;
+	}
+
+	err = gpio_request(data->headset_detect_enable_pin,
+			   "Simple_remote_plug_detect_enable");
+	if (err) {
+		printk(KERN_CRIT "%s: Error %d - Request hs_detect_enable pin",
+		       __func__, err);
+		goto out;
+	}
+
+	err = gpio_direction_output(data->headset_detect_enable_pin, 1);
+	if (err) {
+		printk(KERN_CRIT "%s: Error %d - Set hs_detect_enable pin"
+		       " as output high\n", __func__, err);
+		goto out_hs_det_enable;
+	}
+
+	err = gpio_request(data->headset_detect_read_pin,
+			   "Simple_remote_plug_detect_read");
+	if (err) {
+		printk(KERN_CRIT "%s - Error %d - Request hs-detect_read pin",
+		       __func__, err);
+		goto out_hs_det_enable;
+	}
+
+	err = gpio_direction_input(data->headset_detect_read_pin);
+	if (err) {
+		printk(KERN_CRIT "%s - Error %d - Set hs-detect pin as input\n",
+		       __func__, err);
+		goto out_hs_det_read;
+	}
+	if (BOARD_HWID_DBZ3 != board_hwid || BOARD_HWID_DBZ3_1 != board_hwid)
+		data->invert_plug_det = 1;
+	else
+		data->invert_plug_det = 0;
+
+	if (0 < data->headset_mode_switch_pin) {
+		err = gpio_request(data->headset_mode_switch_pin,
+				   "Simple_remote_headset_mode_switch");
+		if (err) {
+			printk(KERN_CRIT
+			       "%s - Error %d - Request hs-mode_switch pin",
+			       __func__, err);
+			goto out_hs_det_read;
+		}
+
+		err = gpio_direction_output(data->headset_mode_switch_pin, 0);
+		if (err) {
+			printk(KERN_CRIT
+			       "%s - Error %d - Set hs-mode_switch pin as "
+			       "input\n", __func__, err);
+			goto out_hs_mode_switch;
+		}
+	}
+
+	for (i = 0; i < data->num_regs; i++) {
+		data->regs[i].reg = vreg_get(NULL, data->regs[i].name);
+		if (IS_ERR(data->regs[i].reg)) {
+			printk(KERN_ERR "%s - Failed to find regulator %s\n",
+			       __func__, data->regs[i].name);
+			err = PTR_ERR(data->regs[i].reg);
+			if (0 <= data->headset_mode_switch_pin)
+				goto out_hs_mode_switch;
+			else
+				goto out_hs_det_read;
+		}
+	}
+
+	return err;
+
+out_hs_mode_switch:
+	gpio_free(data->headset_mode_switch_pin);
+
+out_hs_det_read:
+	gpio_free(data->headset_detect_read_pin);
+
+out_hs_det_enable:
+	gpio_free(data->headset_detect_enable_pin);
+out:
+	return err;
+}
+
+void simple_remote_pf_deinitialize_gpio(
+	struct simple_remote_platform_data *data)
+{
+	gpio_free(data->headset_detect_read_pin);
+	gpio_free(data->headset_detect_enable_pin);
+}
+
+static struct simple_remote_platform_regulators regs[] =  {
+	{
+		.name = "ncp",
+	},
+	{
+		.name = "s3",
+	},
+	{
+		.name = "s2",
+	},
+
+};
+
+static struct simple_remote_platform_data simple_remote_pf_data = {
+	.headset_detect_enable_pin = PLUG_DET_ENA_PIN,
+	.headset_detect_read_pin = PLUG_DET_READ_PIN,
+	.headset_mode_switch_pin = MODE_SWITCH_PIN,
+	.initialize = &simple_remote_pf_initialize_gpio,
+	.deinitialize = &simple_remote_pf_deinitialize_gpio,
+
+	.regs = regs,
+	.num_regs = ARRAY_SIZE(regs),
+
+	.controller = PM_HSED_CONTROLLER_1,
+};
+
+static struct platform_device simple_remote_pf_device = {
+	.name = SIMPLE_REMOTE_PF_NAME,
+	.dev = {
+		.platform_data = &simple_remote_pf_data,
+	},
+};
+#endif
+
 static void __init msm_fb_add_devices(void)
 {
 	msm_fb_register_device("mdp", &mdp_pdata);
@@ -2200,6 +2414,9 @@ static struct platform_device *devices[] __initdata = {
 	&msm_device_i2c,
 	&msm_device_i2c_2,
 	&msm_device_uart_dm1,
+#ifdef CONFIG_SEMC_RPC_SERVER_HANDSET
+	&semc_rpc_handset_device,
+#endif
 	&hs_device,
 #ifdef CONFIG_MSM7KV2_AUDIO
 	&msm_aictl_device,
@@ -2220,6 +2437,9 @@ static struct platform_device *devices[] __initdata = {
 #endif
 #ifdef CONFIG_BATTERY_SEMC_ARCH
 	&bdata_driver,
+#endif
+#ifdef CONFIG_SIMPLE_REMOTE_PLATFORM
+	&simple_remote_pf_device,
 #endif
 #if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
 	&msm_device_tsif,
