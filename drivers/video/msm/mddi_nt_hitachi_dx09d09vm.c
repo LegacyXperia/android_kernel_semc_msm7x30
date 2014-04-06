@@ -104,8 +104,6 @@ const struct panel_id novatek_panel_id_hitachi_dx09d09vm_type1 = {
 	.regs = { {0xDB00, 0x80}, {0xDC00, 0x06} },
 	.pinfo = &novatek_controller_panel,
 	.mddi_type = 1,
-	.width = 46,
-	.height = 82,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
@@ -116,9 +114,6 @@ const struct panel_id novatek_panel_id_hitachi_dx09d09vm = {
 	.regs = { {0xDA00, 0x01}, {0xDC00, 0x06} },
 	.pinfo = &novatek_controller_panel,
 	.mddi_type = 2,
-	.width = 46,
-	.height = 82,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
-

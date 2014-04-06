@@ -101,9 +101,6 @@ const struct panel_id novatek_panel_id_sony_acx427ak = {
 	.regs = { {0xDA00, 0x01}, {0xDC00, 0x04} },
 	.pinfo = &novatek_controller_panel,
 	.mddi_type = 2,
-	.width = 52,
-	.height = 93,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
-

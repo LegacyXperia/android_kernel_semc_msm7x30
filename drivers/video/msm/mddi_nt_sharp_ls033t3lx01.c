@@ -225,9 +225,6 @@ const struct panel_id novatek_panel_id_sharp_ls033t3lx01 = {
 	.regs = { {0xDA00, 0x70}, {0xDC00, 0x07} },
 	.pinfo = &novatek_controller_panel,
 	.mddi_type = 2,
-	.width = 41,
-	.height = 73,
 	.suspend_support = 1,
 	.esd_support = 1,
 };
-
