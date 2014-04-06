@@ -241,16 +241,6 @@ static void sony_lcd_driver_init(void)
 	write_client_reg_nbr(0x35, 0x00000000, 0, 0, 0, 1);
 }
 
-static void sony_lcd_window_adjust(uint16 x1, uint16 x2,
-					uint16 y1, uint16 y2)
-{
-	sony_lcd_window_address_set(LCD_REG_COLUMN_ADDRESS, x1, x2);
-	sony_lcd_window_address_set(LCD_REG_PAGE_ADDRESS, y1, y2);
-
-	/* Workaround: 0x3Ch at start of column bug */
-	write_client_reg_nbr(0x3C, 0, 0, 0, 0, 1);
-}
-
 static void sony_lcd_enter_sleep(void)
 {
 	/* Enter sleep mode */
@@ -610,7 +600,6 @@ static int mddi_sony_lcd_probe(struct platform_device *pdev)
 		panel_data->on = mddi_sony_ic_on_panel_off;
 		panel_data->controller_on_panel_on = mddi_sony_ic_on_panel_on;
 		panel_data->off = mddi_sony_ic_off_panel_off;
-		panel_data->window_adjust = sony_lcd_window_adjust;
 		panel_data->power_on_panel_at_pan = 0;
 
 		pdev->dev.platform_data = &sony_hvga_panel_data;
@@ -632,7 +621,7 @@ exit_point:
 
 static int __devexit mddi_sony_lcd_remove(struct platform_device *pdev)
 {
-	struct auo_record *rd;
+	struct sony_record *rd;
 
 	device_remove_file(&pdev->dev, &dev_attr_display_driver_version);
 	device_remove_file(&pdev->dev, &dev_attr_dbc_ctrl);
@@ -668,8 +657,7 @@ static void __init msm_mddi_sony_hvga_display_device_init(void)
 	panel_data->panel_info.fb_num = 2;
 	panel_data->panel_info.bl_max = 4;
 	panel_data->panel_info.bl_min = 1;
-	panel_data->panel_info.width = 42;
-	panel_data->panel_info.height = 63;
+	MSM_FB_SINGLE_MODE_PANEL(&panel_data->panel_info);
 
 	panel_data->panel_info.lcd.vsync_enable = TRUE;
 	panel_data->panel_info.lcd.refx100 = REFRESH_RATE;
