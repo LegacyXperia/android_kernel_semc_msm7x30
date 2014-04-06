@@ -43,8 +43,6 @@ struct panel_id {
 	const struct panel_reg		regs[2];
 	struct novatek_controller	*pinfo;
 	const int			mddi_type;
-	const u32			width;	/* in mm */
-	const u32			height;	/* in mm */
 	const int			suspend_support;
 	const int			esd_support;
 };
