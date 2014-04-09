@@ -832,21 +832,6 @@ static void mdp4_mddi_vsync_enable(struct msm_fb_data_type *mfd,
 	    (mfd->panel_info.lcd.vsync_enable)) {
 		data |= tear_en;
 		/*
-		 * rdptr init and irq cannot be same due to h/w bug.
-		 * if they are same, rdptr irqs could be missed.
-		 */
-		if (mfd->panel_info.lcd.primary_vsync_init ||
-			mfd->panel_info.lcd.primary_rdptr_irq) {
-			MDP_OUTP(MDP_BASE + 0x128,
-				mfd->panel_info.lcd.primary_vsync_init);
-			MDP_OUTP(MDP_BASE + 0x21C,
-				mfd->panel_info.lcd.primary_rdptr_irq);
-		} else {
-			MDP_OUTP(MDP_BASE + 0x128, 0);
-			MDP_OUTP(MDP_BASE + 0x21C, 1);
-		}
-
-		/*
 		 * adjust start position and threshold to make sure
 		 * write ptr follows read pts (TE is effective), and
 		 * at the same write is not throttled(shorter dma
