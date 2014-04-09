@@ -831,18 +831,10 @@ static void mdp4_mddi_vsync_enable(struct msm_fb_data_type *mfd,
 	if ((mfd->use_mdp_vsync) && (mfd->ibuf.vsync_enable) &&
 	    (mfd->panel_info.lcd.vsync_enable)) {
 		data |= tear_en;
-		/*
-		 * rdptr init and irq cannot be same due to h/w bug.
-		 * if they are same, rdptr irqs could be missed.
-		 */
-		if (mfd->panel_info.lcd.primary_vsync_init ||
-			mfd->panel_info.lcd.primary_rdptr_irq) {
-			MDP_OUTP(MDP_BASE + 0x128,
-				mfd->panel_info.lcd.primary_vsync_init);
+		if (mfd->panel_info.lcd.primary_rdptr_irq) {
 			MDP_OUTP(MDP_BASE + 0x21C,
 				mfd->panel_info.lcd.primary_rdptr_irq);
 		} else {
-			MDP_OUTP(MDP_BASE + 0x128, 0);
 			MDP_OUTP(MDP_BASE + 0x21C, 1);
 		}
 
