@@ -781,8 +781,11 @@ int __init socinfo_init(void)
 		socinfo = setup_dummy_socinfo();
 	}
 
-	if (!socinfo_get_id())
-		pr_err("%s: Unknown SOC ID!\n", __func__);
+	if (!socinfo_get_id()) {
+		pr_warn("%s: Unknown SOC ID; falling back on "
+			"dummy values.\n", __func__);
+		socinfo = setup_dummy_socinfo();
+	}
 	WARN(socinfo_get_id() >= ARRAY_SIZE(cpu_of_id),
 		"New IDs added! ID => CPU mapping might need an update.\n");
 
