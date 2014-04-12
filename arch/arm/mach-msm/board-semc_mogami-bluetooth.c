@@ -56,7 +56,6 @@ static void config_gpio_table(uint32_t *table, int len)
 static void bluetooth_init(void)
 {
 	config_gpio_table(bt_config_off_gpios, ARRAY_SIZE(bt_config_off_gpios));
-	gpio_set_value(103, 0);
 	bt_on = 0;
 }
 
@@ -64,10 +63,8 @@ static int bluetooth_power(int on)
 {
 	if (on && !bt_on) {
 		config_gpio_table(bt_config_on_gpios, ARRAY_SIZE(bt_config_on_gpios));
-		gpio_set_value(103, 1);
 	} else if (!on && bt_on) {
 		config_gpio_table(bt_config_off_gpios, ARRAY_SIZE(bt_config_off_gpios));
-		gpio_set_value(103, 0);
 	}
 	bt_on = on;
 	return 0;
@@ -121,6 +118,7 @@ static struct ti_st_plat_data wilink_pdata = {
 	.chip_asleep = wilink_asleep,
 	.suspend = wilink_suspend,
 	.resume = wilink_resume,
+	.nshutdown_gpio = 103,
 };
 
 static struct platform_device btwilink_device = {
