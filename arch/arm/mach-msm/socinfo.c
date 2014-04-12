@@ -742,8 +742,15 @@ static void * __init setup_dummy_socinfo(void)
 			sizeof(dummy_socinfo.build_id));
 	} else if (machine_is_msm8625_rumi3())
 		dummy_socinfo.id = 127;
+
+#if defined(CONFIG_BOARD_SEMC_MOGAMI) || defined(CONFIG_BOARD_SEMC_ZEUS)
+	dummy_socinfo.id = 74;
+	strlcpy(dummy_socinfo.build_id, "8x55A-AAABQOAZM-203028G-77",
+		sizeof(dummy_socinfo.build_id));
+#else
 	strlcat(dummy_socinfo.build_id, "Dummy socinfo",
 		sizeof(dummy_socinfo.build_id));
+#endif
 	return (void *) &dummy_socinfo;
 }
 
