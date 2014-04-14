@@ -299,9 +299,6 @@ static void set_aca_id_inputs(struct msm_otg *dev)
 #define get_aca_bmaxpower(dev)		(dev->b_max_power)
 #define set_aca_bmaxpower(dev, power)	(dev->b_max_power = power)
 #else
-static void set_aca_id_inputs(struct msm_otg *dev)
-{
-}
 #define get_aca_bmaxpower(dev)		0
 #define set_aca_bmaxpower(dev, power)
 #endif
