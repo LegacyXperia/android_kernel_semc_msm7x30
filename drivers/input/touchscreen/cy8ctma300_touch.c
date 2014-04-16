@@ -797,7 +797,7 @@ static void cy8ctma300_isr_work(struct work_struct *work)
 	dump_buf(read_buf, TOUCH_DATA_BYTES);
 
 	if (read_buf[TP_REG_TT_MODE] & TP_TT_BIT_DINVAL) {
-		printk(KERN_INFO "CY8CTMA300_TOUCH: invalid data?\n");
+		//printk(KERN_INFO "CY8CTMA300_TOUCH: invalid data?\n");
 		goto out;
 	};
 
@@ -810,8 +810,8 @@ static void cy8ctma300_isr_work(struct work_struct *work)
 	if (this->use_spi_buffer_valid) {
 		if ((read_buf[TP_REG_TT_STAT] & TP_SPI_BUFFER_VALID_MASK) !=
 		   TP_SPI_BUFFER_VALID) {
-			dev_info(&this->spi->dev,
-				 "CY8CTMA300_TOUCH: rejected data.\n");
+			//dev_info(&this->spi->dev,
+			//	 "CY8CTMA300_TOUCH: rejected data.\n");
 			goto out;
 		}
 	}
