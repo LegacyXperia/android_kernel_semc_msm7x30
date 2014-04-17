@@ -572,27 +572,27 @@ void mdp4_overlay_dmas_cfg(struct msm_fb_data_type *mfd)
 {
 	uint32 dma_s_cfg_reg;
 
-	dma_s_cfg_reg = 0;
+	dma_s_cfg_reg = DMA_DITHER_EN;
+
+#ifdef BLT_RGB565
+	/* RGB888 is 0 */
+	dma_s_cfg_reg |= DMA_BUF_FORMAT_RGB565; /* blt only */
+#endif
 
 	if (mfd->fb_imgType == MDP_BGR_565)
 		dma_s_cfg_reg |= DMA_PACK_PATTERN_BGR;
 	else
 		dma_s_cfg_reg |= DMA_PACK_PATTERN_RGB;
 
-	if (mfd->fb_imgType == MDP_RGB_565)
-		dma_s_cfg_reg |= DMA_IBUF_FORMAT_RGB565;
-
-	dma_s_cfg_reg |= DMA_DITHER_EN;
-
-	if (mfd->panel_info.bpp == 24) {
-		dma_s_cfg_reg |= DMA_DSTC0G_8BITS |	/* 666 18BPP */
-		    DMA_DSTC1B_8BITS | DMA_DSTC2R_8BITS;
-	} else if (mfd->panel_info.bpp == 18) {
+	if (mfd->panel_info.bpp == 18) {
 		dma_s_cfg_reg |= DMA_DSTC0G_6BITS |	/* 666 18BPP */
 		    DMA_DSTC1B_6BITS | DMA_DSTC2R_6BITS;
-	} else {
+	} else if (mfd->panel_info.bpp == 16) {
 		dma_s_cfg_reg |= DMA_DSTC0G_6BITS |	/* 565 16BPP */
 		    DMA_DSTC1B_5BITS | DMA_DSTC2R_5BITS;
+	} else {
+		dma_s_cfg_reg |= DMA_DSTC0G_8BITS |	/* 888 24BPP */
+		    DMA_DSTC1B_8BITS | DMA_DSTC2R_8BITS;
 	}
 
 	/* MDP cmd block enable */
