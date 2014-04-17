@@ -78,7 +78,7 @@ static struct vsycn_ctrl {
 
 /* MDP 4.0 versions earlier than 2.1 suffer underrun from DMA_P pipe on
  * MDDI panels. To overcome this MDDI overlay driver uses DMA_S pipe. */
-bool mddi_use_dmap(void)
+static bool mddi_use_dmap(void)
 {
 	return (mdp_hw_revision >= MDP4_REVISION_V2_1);
 }
@@ -397,10 +397,10 @@ int mdp4_mddi_pipe_commit(int cndx, int wait)
 		mdp4_overlayproc_cfg(pipe);
 		if (mddi_use_dmap())
 			mdp4_overlay_dmap_xy(pipe);
+		else
+			mdp4_overlay_dmas_xy(pipe);
 		vctrl->blt_change = 0;
 	}
-	if (!mddi_use_dmap())
-		mdp4_overlay_dmas_xy(pipe);
 
 	pipe = vp->plist;
 	for (i = 0; i < OVERLAY_PIPE_MAX; i++, pipe++) {
@@ -985,7 +985,7 @@ static void mdp4_overlay_update_mddi(struct msm_fb_data_type *mfd)
 	}
 
 	if (mddi_use_dmap()) {
-		mddi_ld_param = 0; /* DMA_S */
+		mddi_ld_param = 0; /* DMA_P */
 	} else {
 		mddi_ld_param = 1; /* DMA_S */
 	}
@@ -1072,6 +1072,9 @@ int mdp4_mddi_on(struct platform_device *pdev)
 	mdp4_iommu_attach();
 
 	atomic_set(&vctrl->suspend, 0);
+
+	if (!mddi_use_dmap())
+		mdp4_mddi_blt_start(mfd);
 
 	mutex_unlock(&mfd->dma->ov_mutex);
 

@@ -1046,7 +1046,6 @@ static inline void mdp4_unmap_sec_resource(struct msm_fb_data_type *mfd);
 #endif
 
 #ifdef CONFIG_FB_MSM_MDDI
-bool mddi_use_dmap(void);
 void mdp4_mddi_pipe_queue(int cndx, struct mdp4_overlay_pipe *pipe);
 int mdp4_mddi_pipe_commit(int cndx, int wait);
 void mdp4_mddi_vsync_ctrl(struct fb_info *info, int enable);
@@ -1067,10 +1066,6 @@ int mdp4_mddi_on(struct platform_device *pdev);
 int mdp4_mddi_off(struct platform_device *pdev);
 void mdp4_mddi_overlay(struct msm_fb_data_type *mfd);
 #else
-static inline bool mddi_use_dmap(void)
-{
-	return false;
-}
 static inline void mdp4_mddi_pipe_queue(int cndx,
 	struct mdp4_overlay_pipe *pipe)
 {
