@@ -3206,11 +3206,6 @@ int mdp4_overlay_mdp_perf_req(struct msm_fb_data_type *mfd)
 						   pipe->bw_ib_quota);
 		}
 
-		/* If MDDI is using DMA_S, BLT needs to be enabled to support
-		 * multiple hardware pipes. */
-		if (ctrl->panel_mode & MDP4_PANEL_MDDI && !mddi_use_dmap())
-			perf_req->use_ov_blt[MDP4_MIXER0] = 1;
-
 		if (mfd->mdp_rev == MDP_REV_41) {
 			/*
 			 * writeback (blt) mode to provide work around
