@@ -428,7 +428,7 @@ ssize_t mdp4_lcdc_show_event(struct device *dev,
 		return ret;
 
 	vsync_tick = ktime_to_ns(vctrl->vsync_time);
-	ret = scnprintf(buf, PAGE_SIZE, "VSYNC=%llu", vsync_tick);
+	ret = scnprintf(buf, PAGE_SIZE, "VSYNC=%llu\n", vsync_tick);
 	buf[strlen(buf) + 1] = '\0';
 	return ret;
 }
