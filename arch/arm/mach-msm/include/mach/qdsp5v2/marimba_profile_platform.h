@@ -47,14 +47,8 @@
 #include <mach/qdsp5v2/marimba_profile_satsuma.h>
 #elif defined(CONFIG_MACH_SEMC_MANGO)
 #include <mach/qdsp5v2/marimba_profile_mango.h>
-#elif defined(CONFIG_MACH_SEMC_AYAME)
-#include <mach/qdsp5v2/marimba_profile_ayame.h>
 #elif defined(CONFIG_MACH_SEMC_HAIDA)
 #include <mach/qdsp5v2/marimba_profile_hallon.h>
-#elif defined(CONFIG_MACH_SEMC_PHOENIX)
-#include <mach/qdsp5v2/marimba_profile_phoenix.h>
-#else
-#include <mach/qdsp5v2/marimba_profile_mogami.h>
 #endif
 
 /***************************************************************************\
