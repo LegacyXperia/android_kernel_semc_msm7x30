@@ -1,6 +1,7 @@
 /* linux/arch/arm/mach-msm/rpc_hsusb.c
  *
  * Copyright (c) 2008-2012, The Linux Foundation. All rights reserved.
+ * Copyright (C) 2010 Sony Ericsson Mobile Communications AB.
  *
  * All source code in this file is licensed under the following license except
  * where indicated.
@@ -23,6 +24,11 @@
 #include <linux/module.h>
 #include <mach/rpc_hsusb.h>
 #include <asm/mach-types.h>
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+#include <linux/mutex.h>
+#include <linux/power_supply.h>
+#include <linux/delay.h>
+#endif
 
 static struct msm_rpc_endpoint *usb_ep;
 static struct msm_rpc_endpoint *chg_ep;
@@ -423,6 +429,10 @@ int msm_chg_usb_i_is_available(uint32_t sample)
 	} else
 		pr_debug("msm_chg_usb_i_is_available(%u)\n", sample);
 
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+	usleep(3000);
+#endif
+
 	return rc;
 }
 EXPORT_SYMBOL(msm_chg_usb_i_is_available);
@@ -623,18 +633,121 @@ int usb_diag_update_pid_and_serial_num(uint32_t pid, const char *snum)
 
 
 #ifdef CONFIG_USB_MSM_72K
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+static enum power_supply_property hsusb_chg_props[] = {
+	POWER_SUPPLY_PROP_ONLINE,
+};
+
+static char **hsusb_chg_supplied_to;
+static size_t hsusb_chg_num_supplicants;
+
+struct hsusb_chg_state {
+	struct power_supply supply_usb;
+	struct power_supply supply_ac;
+	enum chg_type connected;
+	unsigned int usb_chg_current_ma;
+	struct mutex lock;
+};
+
+static int hsusb_chg_get_property(struct power_supply *,
+		enum power_supply_property psp,
+		union power_supply_propval *val);
+
+static struct hsusb_chg_state hsusb_chg_state = {
+	.supply_usb = {
+		.name = "hsusb_chg",
+		.type = POWER_SUPPLY_TYPE_USB,
+		.properties = hsusb_chg_props,
+		.num_properties = ARRAY_SIZE(hsusb_chg_props),
+		.get_property = hsusb_chg_get_property,
+	},
+	.supply_ac = {
+		.name = "ac",
+		.type = POWER_SUPPLY_TYPE_MAINS,
+		.properties = hsusb_chg_props,
+		.num_properties = ARRAY_SIZE(hsusb_chg_props),
+		.get_property = hsusb_chg_get_property,
+	},
+	.connected = USB_CHG_TYPE__INVALID,
+	.usb_chg_current_ma = 0,
+};
+
+void hsusb_chg_set_supplicants(char **supplied_to, size_t num_supplicants)
+{
+	hsusb_chg_supplied_to = supplied_to;
+	hsusb_chg_num_supplicants = num_supplicants;
+
+}
+EXPORT_SYMBOL(hsusb_chg_set_supplicants);
+
+static int hsusb_chg_get_property(struct power_supply *bat_ps,
+		enum power_supply_property psp,
+		union power_supply_propval *val)
+{
+	switch (psp) {
+	case POWER_SUPPLY_PROP_ONLINE:
+		if (bat_ps->type == POWER_SUPPLY_TYPE_MAINS &&
+		    hsusb_chg_state.connected == USB_CHG_TYPE__WALLCHARGER)
+			val->intval = 1;
+		else if (bat_ps->type == POWER_SUPPLY_TYPE_USB &&
+			 hsusb_chg_state.connected == USB_CHG_TYPE__SDP &&
+			 hsusb_chg_state.usb_chg_current_ma != 0)
+			val->intval = 1;
+		else
+			val->intval = 0;
+		break;
+	default:
+		return -EINVAL;
+	}
+	return 0;
+}
+#endif
+
 /* charger api wrappers */
 int hsusb_chg_init(int connect)
 {
-	if (connect)
+	if (connect) {
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+		mutex_init(&hsusb_chg_state.lock);
+
+		if (hsusb_chg_supplied_to) {
+			hsusb_chg_state.supply_usb.supplied_to =
+				hsusb_chg_supplied_to;
+			hsusb_chg_state.supply_usb.num_supplicants =
+				hsusb_chg_num_supplicants;
+			hsusb_chg_state.supply_ac.supplied_to =
+				hsusb_chg_supplied_to;
+			hsusb_chg_state.supply_ac.num_supplicants =
+				hsusb_chg_num_supplicants;
+		}
+
+		power_supply_register(NULL, &hsusb_chg_state.supply_usb);
+		power_supply_register(NULL, &hsusb_chg_state.supply_ac);
+#endif
 		return msm_chg_rpc_connect();
-	else
+	} else {
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+		power_supply_unregister(&hsusb_chg_state.supply_usb);
+		power_supply_unregister(&hsusb_chg_state.supply_ac);
+#endif
 		return msm_chg_rpc_close();
+	}
 }
 EXPORT_SYMBOL(hsusb_chg_init);
 
 void hsusb_chg_vbus_draw(unsigned mA)
 {
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+	mutex_lock(&hsusb_chg_state.lock);
+	hsusb_chg_state.usb_chg_current_ma = mA;
+	mutex_unlock(&hsusb_chg_state.lock);
+
+	if (hsusb_chg_state.connected == USB_CHG_TYPE__WALLCHARGER)
+		power_supply_changed(&hsusb_chg_state.supply_ac);
+	else
+		power_supply_changed(&hsusb_chg_state.supply_usb);
+#endif
+
 	msm_chg_usb_i_is_available(mA);
 }
 EXPORT_SYMBOL(hsusb_chg_vbus_draw);
@@ -647,6 +760,20 @@ void hsusb_chg_connected(enum chg_type chgtype)
 			"INVALID"};
 
 	if (chgtype == USB_CHG_TYPE__INVALID) {
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+		mutex_lock(&hsusb_chg_state.lock);
+		hsusb_chg_state.usb_chg_current_ma = 0;
+		mutex_unlock(&hsusb_chg_state.lock);
+
+		if (hsusb_chg_state.connected == USB_CHG_TYPE__WALLCHARGER) {
+			hsusb_chg_state.connected = chgtype;
+			power_supply_changed(&hsusb_chg_state.supply_ac);
+		} else {
+			hsusb_chg_state.connected = chgtype;
+			power_supply_changed(&hsusb_chg_state.supply_usb);
+		}
+#endif
+
 		msm_chg_usb_i_is_not_available();
 		msm_chg_usb_charger_disconnected();
 		return;
@@ -654,7 +781,29 @@ void hsusb_chg_connected(enum chg_type chgtype)
 
 	pr_info("\nCharger Type: %s\n", chg_types[chgtype]);
 
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+	hsusb_chg_state.connected = chgtype;
+	if (hsusb_chg_state.connected == USB_CHG_TYPE__WALLCHARGER)
+		power_supply_changed(&hsusb_chg_state.supply_ac);
+	else
+		power_supply_changed(&hsusb_chg_state.supply_usb);
+#endif
+
 	msm_chg_usb_charger_connected(chgtype);
 }
 EXPORT_SYMBOL(hsusb_chg_connected);
+
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+unsigned int hsusb_get_chg_current_ma(void)
+{
+	unsigned int ma;
+
+	mutex_lock(&hsusb_chg_state.lock);
+	ma = hsusb_chg_state.usb_chg_current_ma;
+	mutex_unlock(&hsusb_chg_state.lock);
+
+	return ma;
+}
+EXPORT_SYMBOL(hsusb_get_chg_current_ma);
+#endif
 #endif
