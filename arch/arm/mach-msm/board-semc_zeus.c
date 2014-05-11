@@ -107,9 +107,6 @@
 #ifdef CONFIG_USB_MSM_OTG_72K
 #include <mach/msm72k_otg.h>
 #endif
-#ifdef CONFIG_SEMC_CHARGER_USB_ARCH
-#include <mach/semc_charger_usb.h>
-#endif
 
 #ifdef CONFIG_SENSORS_AKM8975
 #include <linux/i2c/akm8975.h>
@@ -1864,12 +1861,6 @@ static void cypress_touch_gpio_init(void)
 }
 #endif
 
-#ifdef CONFIG_SEMC_CHARGER_USB_ARCH
-static char *semc_chg_usb_supplied_to[] = {
-	MAX17040_NAME,
-};
-#endif
-
 #ifdef CONFIG_BATTERY_SEMC_ARCH
 static char *semc_bdata_supplied_to[] = {
 	MAX17040_NAME,
@@ -2190,6 +2181,11 @@ static struct msm_usb_host_platform_data msm_usb_host_pdata = {
 };
 #endif
 
+/* Driver(s) to be notified upon change in USB */
+static char *hsusb_chg_supplied_to[] = {
+	MAX17040_NAME,
+};
+
 #ifdef CONFIG_USB_MSM_OTG_72K
 static int hsusb_rpc_connect(int connect)
 {
@@ -2269,15 +2265,12 @@ static struct msm_otg_platform_data msm_otg_pdata = {
 	.cdr_autoreset		 = CDR_AUTO_RESET_DISABLE,
 	.drv_ampl		 = HS_DRV_AMPLITUDE_DEFAULT,
 	.se1_gating		 = SE1_GATING_DISABLE,
+	.chg_vbus_draw		 = hsusb_chg_vbus_draw,
+	.chg_connected		 = hsusb_chg_connected,
+	.chg_init		 = hsusb_chg_init,
 	.ldo_enable		 = msm_hsusb_ldo_enable,
 	.ldo_init		 = msm_hsusb_ldo_init,
 	.ldo_set_voltage	 = msm_hsusb_ldo_set_voltage,
-#ifdef CONFIG_SEMC_CHARGER_USB_ARCH
-	.chg_vbus_draw		 = semc_charger_usb_vbus_draw,
-	.chg_connected		 = semc_charger_usb_connected,
-	.chg_init		 = semc_charger_usb_init,
-#endif
-	.phy_can_powercollapse	 = 1,
 };
 
 #ifdef CONFIG_USB_GADGET
@@ -3372,10 +3365,8 @@ static void __init msm7x30_init(void)
 			     msm_num_footswitch_devices);
 	platform_add_devices(devices, ARRAY_SIZE(devices));
 	zeus_temp_fixups();
-#ifdef CONFIG_SEMC_CHARGER_USB_ARCH
-	semc_chg_usb_set_supplicants(semc_chg_usb_supplied_to,
-				  ARRAY_SIZE(semc_chg_usb_supplied_to));
-#endif
+	hsusb_chg_set_supplicants(hsusb_chg_supplied_to,
+				  ARRAY_SIZE(hsusb_chg_supplied_to));
 #ifdef CONFIG_USB_EHCI_MSM_72K
 	msm_add_host(0, &msm_usb_host_pdata);
 #endif
