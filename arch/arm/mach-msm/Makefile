@@ -104,7 +104,11 @@ ifndef CONFIG_ARCH_MSM8974
 ifndef CONFIG_ARCH_MSM7X30
 	obj-$(CONFIG_MSM_ONCRPCROUTER) += rpc_hsusb.o rpc_pmapp.o rpc_fsusb.o
 else
+ifdef CONFIG_BOARD_SEMC_ZEUS
+	obj-$(CONFIG_MSM_ONCRPCROUTER) += rpc_hsusb.o rpc_pmapp.o rpc_fsusb.o
+else
 	obj-$(CONFIG_MSM_ONCRPCROUTER) += rpc_pmapp.o
+endif
 endif
 endif
 endif
