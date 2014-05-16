@@ -23,9 +23,9 @@
 #include <linux/hrtimer.h>
 #include <mach/pmic.h>
 #include <mach/camera.h>
-#if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
+#ifdef CONFIG_BOARD_SEMC_ZEUS
 #include <linux/delay.h>
-#endif /* CONFIG_MACH_SEMC_ZEUS */
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 #include <mach/gpio.h>
 
 struct timer_list timer_flash;
@@ -114,7 +114,7 @@ int msm_camera_flash_pmic(
 	return rc;
 }
 
-#if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
+#ifdef CONFIG_BOARD_SEMC_ZEUS
 /**
  * Access GPIO
 */
@@ -174,7 +174,7 @@ int msm_camera_flash_gpio(
 
 	return rc;
 }
-#endif /* CONFIG_MACH_SEMC_ZEUS */
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 
 int32_t msm_camera_flash_set_led_state(
 	struct msm_camera_sensor_flash_data *fdata, unsigned led_state)
@@ -197,12 +197,12 @@ int32_t msm_camera_flash_set_led_state(
 		rc = msm_camera_flash_pwm(&fdata->flash_src->_fsrc.pwm_src,
 			led_state);
 		break;
-#if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
+#ifdef CONFIG_BOARD_SEMC_ZEUS
 	case MSM_CAMERA_FLASH_SRC_LED:
 			rc = msm_camera_flash_gpio(fdata->flash_src->_fsrc.gpio_led_src,
 				led_state);
 			break;
-#endif /* CONFIG_MACH_SEMC_ZEUS */
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 	default:
 		rc = -ENODEV;
 		break;

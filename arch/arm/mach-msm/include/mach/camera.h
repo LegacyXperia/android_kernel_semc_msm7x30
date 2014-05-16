@@ -871,9 +871,9 @@ struct msm_sensor_ctrl {
 	int (*s_init)(const struct msm_camera_sensor_info *);
 	int (*s_release)(void);
 	int (*s_config)(void __user *);
-#if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
+#ifdef CONFIG_BOARD_SEMC_ZEUS
 	int (*s_get_capture_started)(void);
-#endif /* CONFIG_MACH_SEMC_ZEUS */
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 };
 struct msm_strobe_flash_ctrl {
 	int (*strobe_flash_init)
@@ -963,9 +963,9 @@ struct msm_sync {
 	spinlock_t pmem_stats_spinlock;
 	spinlock_t abort_pict_lock;
 
-#if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
+#ifdef CONFIG_BOARD_SEMC_ZEUS
 	uint8_t validframe;
-#endif /* CONFIG_MACH_SEMC_ZEUS */
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 };
 
 #define MSM_APPS_ID_V4L2 "msm_v4l2"

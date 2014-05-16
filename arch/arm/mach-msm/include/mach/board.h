@@ -83,7 +83,7 @@ struct msm_camera_csi_params {
 	uint8_t settle_cnt;
 	uint8_t dpcm_scheme;
 };
-#endif
+#endif /* CONFIG_BOARD_SEMC_MOGAMI || CONFIG_BOARD_SEMC_ZEUS */
 
 #ifdef CONFIG_SENSORS_MT9T013
 struct msm_camera_legacy_device_platform_data {
@@ -113,7 +113,7 @@ struct msm_camera_sensor_pwr {
 		int number;
 	} resource;
 };
-#endif
+#endif /* CONFIG_BOARD_SEMC_MOGAMI || CONFIG_BOARD_SEMC_ZEUS) */
 
 #define MSM_CAMERA_FLASH_SRC_PMIC (0x00000001<<0)
 #define MSM_CAMERA_FLASH_SRC_PWM  (0x00000001<<1)
@@ -121,7 +121,7 @@ struct msm_camera_sensor_pwr {
 #define MSM_CAMERA_FLASH_SRC_EXT     (0x00000001<<3)
 #ifdef CONFIG_BOARD_SEMC_ZEUS
 #define MSM_CAMERA_FLASH_SRC_LED (0x00000001<<2)
-#else
+#else /* CONFIG_BOARD_SEMC_ZEUS */
 #define MSM_CAMERA_FLASH_SRC_LED (0x00000001<<3)
 #define MSM_CAMERA_FLASH_SRC_LED1 (0x00000001<<4)
 #endif /* CONFIG_BOARD_SEMC_ZEUS */
@@ -304,7 +304,7 @@ struct msm_camera_sensor_info {
 	int sensor_reset;
 #if defined(CONFIG_BOARD_SEMC_MOGAMI) || defined(CONFIG_BOARD_SEMC_ZEUS)
 	int sub_sensor_reset;
-#endif
+#endif /* CONFIG_BOARD_SEMC_MOGAMI || CONFIG_BOARD_SEMC_ZEUS) */
 	int sensor_pwd;
 	int vcm_pwd;
 	int vcm_enable;
@@ -322,7 +322,7 @@ struct msm_camera_sensor_info {
 	struct msm_camera_sensor_pwr vcam_sd;
 	struct msm_camera_sensor_pwr vcam_af;
 	struct msm_camera_sensor_pwr vcam_sa;
-#endif
+#endif /* CONFIG_BOARD_SEMC_MOGAMI || CONFIG_BOARD_SEMC_ZEUS) */
 	struct msm_camera_sensor_strobe_flash_data *strobe_flash_data;
 	char *eeprom_data;
 	enum msm_camera_type camera_type;

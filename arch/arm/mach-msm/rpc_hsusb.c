@@ -28,7 +28,7 @@
 #include <linux/mutex.h>
 #include <linux/power_supply.h>
 #include <linux/delay.h>
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 
 static struct msm_rpc_endpoint *usb_ep;
 static struct msm_rpc_endpoint *chg_ep;
@@ -431,7 +431,7 @@ int msm_chg_usb_i_is_available(uint32_t sample)
 
 #ifdef CONFIG_BOARD_SEMC_ZEUS
 	usleep(3000);
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 
 	return rc;
 }
@@ -701,7 +701,7 @@ static int hsusb_chg_get_property(struct power_supply *bat_ps,
 	}
 	return 0;
 }
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 
 /* charger api wrappers */
 int hsusb_chg_init(int connect)
@@ -723,13 +723,13 @@ int hsusb_chg_init(int connect)
 
 		power_supply_register(NULL, &hsusb_chg_state.supply_usb);
 		power_supply_register(NULL, &hsusb_chg_state.supply_ac);
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 		return msm_chg_rpc_connect();
 	} else {
 #ifdef CONFIG_BOARD_SEMC_ZEUS
 		power_supply_unregister(&hsusb_chg_state.supply_usb);
 		power_supply_unregister(&hsusb_chg_state.supply_ac);
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 		return msm_chg_rpc_close();
 	}
 }
@@ -746,7 +746,7 @@ void hsusb_chg_vbus_draw(unsigned mA)
 		power_supply_changed(&hsusb_chg_state.supply_ac);
 	else
 		power_supply_changed(&hsusb_chg_state.supply_usb);
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 
 	msm_chg_usb_i_is_available(mA);
 }
@@ -772,7 +772,7 @@ void hsusb_chg_connected(enum chg_type chgtype)
 			hsusb_chg_state.connected = chgtype;
 			power_supply_changed(&hsusb_chg_state.supply_usb);
 		}
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 
 		msm_chg_usb_i_is_not_available();
 		msm_chg_usb_charger_disconnected();
@@ -787,7 +787,7 @@ void hsusb_chg_connected(enum chg_type chgtype)
 		power_supply_changed(&hsusb_chg_state.supply_ac);
 	else
 		power_supply_changed(&hsusb_chg_state.supply_usb);
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 
 	msm_chg_usb_charger_connected(chgtype);
 }
@@ -805,5 +805,5 @@ unsigned int hsusb_get_chg_current_ma(void)
 	return ma;
 }
 EXPORT_SYMBOL(hsusb_get_chg_current_ma);
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 #endif

@@ -300,9 +300,9 @@ enum  VFE_STATE {
 #define V31_SYNC_TIMER_SETTING    104
 #define V31_ASYNC_TIMER_SETTING   105
 #define V31_LIVESHOT              106
-#if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
+#ifdef CONFIG_BOARD_SEMC_ZEUS
 #define V31_START_RAW_CAPTURE	  107
-#endif /* CONFIG_MACH_SEMC_ZEUS */
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 #define V31_CAMIF_OFF             0x000001E4
 #define V31_CAMIF_LEN             32
 
