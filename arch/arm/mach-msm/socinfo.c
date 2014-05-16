@@ -747,10 +747,10 @@ static void * __init setup_dummy_socinfo(void)
 	dummy_socinfo.id = 74;
 	strlcpy(dummy_socinfo.build_id, "8x55A-AAABQOAZM-203028G-77",
 		sizeof(dummy_socinfo.build_id));
-#else
+#else /* CONFIG_BOARD_SEMC_MOGAMI || CONFIG_BOARD_SEMC_ZEUS) */
 	strlcat(dummy_socinfo.build_id, "Dummy socinfo",
 		sizeof(dummy_socinfo.build_id));
-#endif
+#endif /* CONFIG_BOARD_SEMC_MOGAMI || CONFIG_BOARD_SEMC_ZEUS) */
 	return (void *) &dummy_socinfo;
 }
 

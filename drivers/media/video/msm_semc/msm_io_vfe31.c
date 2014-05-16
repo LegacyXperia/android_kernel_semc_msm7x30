@@ -416,9 +416,9 @@ int msm_camio_enable(struct platform_device *pdev)
 	uint32_t val;
 	struct msm_camera_sensor_info *sinfo = pdev->dev.platform_data;
 	msm_camio_clk_enable(CAMIO_VFE_PBDG_CLK);
-#if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
+#ifdef CONFIG_BOARD_SEMC_ZEUS
 	msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
-#endif /* CONFIG_MACH_SEMC_ZEUS */
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 	if (!sinfo->csi_if)
 		msm_camio_clk_enable(CAMIO_VFE_CAMIF_CLK);
 	else {
@@ -583,11 +583,11 @@ int msm_camio_probe_on(struct platform_device *pdev)
 	struct msm_camera_sensor_info *sinfo = pdev->dev.platform_data;
 	struct msm_camera_device_platform_data *camdev = sinfo->pdata;
 	camdev->camera_gpio_on();
-#if defined(CONFIG_MACH_SEMC_ZEUS) || defined(CONFIG_MACH_SEMC_PHOENIX)
+#ifdef CONFIG_BOARD_SEMC_ZEUS
 	return msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
-#else
+#else /* CONFIG_BOARD_SEMC_ZEUS */
 	return 0;
-#endif /* CONFIG_MACH_SEMC_ZEUS */
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 }
 
 int msm_camio_probe_off(struct platform_device *pdev)
@@ -595,12 +595,11 @@ int msm_camio_probe_off(struct platform_device *pdev)
 	struct msm_camera_sensor_info *sinfo = pdev->dev.platform_data;
 	struct msm_camera_device_platform_data *camdev = sinfo->pdata;
 	camdev->camera_gpio_off();
-#if !defined(CONFIG_SEMC_CAMERA_MODULE) && \
-	!defined(CONFIG_SEMC_SUB_CAMERA_MODULE)
+#ifdef CONFIG_BOARD_SEMC_ZEUS
 	return msm_camio_clk_disable(CAMIO_CAM_MCLK_CLK);
-#else
+#else /* CONFIG_BOARD_SEMC_ZEUS */
 	return 0;
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 }
 
 int msm_camio_sensor_clk_on(struct platform_device *pdev)
@@ -611,10 +610,9 @@ int msm_camio_sensor_clk_on(struct platform_device *pdev)
 	camio_clk = camdev->ioclk;
 	camio_ext = camdev->ioext;
 	camdev->camera_gpio_on();
-#if !defined(CONFIG_SEMC_CAMERA_MODULE) && \
-	!defined(CONFIG_SEMC_SUB_CAMERA_MODULE)
+#ifdef CONFIG_BOARD_SEMC_ZEUS
 	msm_camio_clk_enable(CAMIO_CAM_MCLK_CLK);
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 	msm_camio_clk_enable(CAMIO_CAMIF_PAD_PBDG_CLK);
 	if (!sinfo->csi_if) {
 		camifpadio = request_mem_region(camio_ext.camifpadphy,

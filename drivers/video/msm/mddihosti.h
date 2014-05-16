@@ -451,9 +451,9 @@ typedef struct {
 #else
 #if defined(CONFIG_BOARD_SEMC_MOGAMI) || defined(CONFIG_BOARD_SEMC_ZEUS)
 #define MDDI_LLIST_POOL_SIZE 0x8000
-#else
+#else /* CONFIG_BOARD_SEMC_MOGAMI || CONFIG_BOARD_SEMC_ZEUS */
 #define MDDI_LLIST_POOL_SIZE 0x1000
-#endif
+#endif /* CONFIG_BOARD_SEMC_MOGAMI || CONFIG_BOARD_SEMC_ZEUS */
 #endif
 #define MDDI_MAX_NUM_LLIST_ITEMS (MDDI_LLIST_POOL_SIZE / \
 		 sizeof(mddi_linked_list_type))

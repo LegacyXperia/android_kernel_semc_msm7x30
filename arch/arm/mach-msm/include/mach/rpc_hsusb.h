@@ -49,7 +49,7 @@ void hsusb_chg_connected(enum chg_type chgtype);
 #ifdef CONFIG_BOARD_SEMC_ZEUS
 void hsusb_chg_set_supplicants(char **supplied_to, size_t num_supplicants);
 unsigned int hsusb_get_chg_current_ma(void);
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 #endif
 
 
@@ -90,7 +90,7 @@ static inline void hsusb_chg_connected(enum chg_type chgtype) { }
 static inline void hsusb_chg_set_supplicants(char **supplied_to,
 					     size_t num_supplicants) { }
 static inline unsigned int hsusb_get_chg_current_ma(void) { return 0; }
-#endif
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 #endif
 
 static inline int msm_fsusb_rpc_init(struct msm_otg_ops *ops) { return 0; }
