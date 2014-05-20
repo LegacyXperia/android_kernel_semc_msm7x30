@@ -547,6 +547,7 @@ static const struct file_operations ghsuart_ctrl_stats_ops = {
 	.write = ghsuart_ctrl_reset_stats,
 };
 
+#if defined(CONFIG_DEBUG_FS)
 static struct dentry	*ghsuart_ctrl_dent;
 static int ghsuart_ctrl_debugfs_init(void)
 {
@@ -571,9 +572,11 @@ static void ghsuart_ctrl_debugfs_exit(void)
 {
 	debugfs_remove_recursive(ghsuart_ctrl_dent);
 }
+#endif
 
 static int __init ghsuart_ctrl_init(void)
 {
+#if defined(CONFIG_DEBUG_FS)
 	int ret;
 
 	ret = ghsuart_ctrl_debugfs_init();
@@ -581,13 +584,16 @@ static int __init ghsuart_ctrl_init(void)
 		pr_debug("mode debugfs file is not available\n");
 		return ret;
 	}
+#endif
 	return 0;
 }
 module_init(ghsuart_ctrl_init);
 
 static void __exit ghsuart_ctrl_exit(void)
 {
+#if defined(CONFIG_DEBUG_FS)
 	ghsuart_ctrl_debugfs_exit();
+#endif
 }
 module_exit(ghsuart_ctrl_exit);
 
