@@ -299,7 +299,7 @@ static void __devexit vreg_debug_exit(void)
 }
 #else
 static inline int __init vreg_debug_init(void) { return 0; }
-static inline void __exit vreg_debug_exit(void) { return 0; }
+static inline void __exit vreg_debug_exit(void) { }
 #endif
 
 static int __init vreg_init(void)
