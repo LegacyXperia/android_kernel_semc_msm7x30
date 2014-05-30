@@ -4046,7 +4046,6 @@ struct ion_platform_heap msm7x30_heaps[] = {
 			.type	= ION_HEAP_TYPE_CARVEOUT,
 			.name	= ION_WB_HEAP_NAME,
 			.memory_type = ION_EBI_TYPE,
-			.has_outer_cache = 1,
 			.extra_data = (void *)&co_ion_pdata,
 		},
 #endif
@@ -4054,6 +4053,7 @@ struct ion_platform_heap msm7x30_heaps[] = {
 
 static struct ion_platform_data ion_pdata = {
 	.nr = MSM_ION_HEAP_NUM,
+	.has_outer_cache = 1,
 	.heaps = msm7x30_heaps,
 };
 
