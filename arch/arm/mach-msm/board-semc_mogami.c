@@ -239,7 +239,7 @@
 #ifdef CONFIG_SEMC_CAMERA_8MP
 #define MSM_PMEM_ADSP_SIZE      0x2F00000
 #else
-#define MSM_PMEM_ADSP_SIZE      0x1FBD000
+#define MSM_PMEM_ADSP_SIZE      0x2000000
 #endif
 
 #ifdef CONFIG_ION_MSM
