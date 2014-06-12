@@ -1517,7 +1517,7 @@ static u32 vid_dec_set_buffer(struct video_client_ctx *client_ctx,
 	if (!vidc_insert_addr_table(client_ctx, dir_buffer,
 		(unsigned long)buffer_info->buffer.bufferaddr,
 		&kernel_vaddr, buffer_info->buffer.pmem_fd,
-		buf_adr_offset, MAX_VIDEO_NUM_OF_BUFF, length)) {
+		buf_adr_offset, MAX_VIDEO_NUM_OF_BUFF, length, 0 /*force_pmem*/)) {
 		DBG("%s() : user_virt_addr = %p cannot be set.",
 		    __func__, buffer_info->buffer.bufferaddr);
 		return false;

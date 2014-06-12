@@ -590,7 +590,7 @@ u32 vidc_lookup_addr_table(struct video_client_ctx *client_ctx,
 	}
 
 	if (found) {
-		*phy_addr = buf_addr_table[i].dev_addr;
+		*phy_addr = buf_addr_table[i].phy_addr;
 		*pmem_fd = buf_addr_table[i].pmem_fd;
 		*file = buf_addr_table[i].file;
 		*buffer_index = i;
@@ -625,7 +625,7 @@ u32 vidc_insert_addr_table(struct video_client_ctx *client_ctx,
 	enum buffer_dir buffer, unsigned long user_vaddr,
 	unsigned long *kernel_vaddr, int pmem_fd,
 	unsigned long buffer_addr_offset, unsigned int max_num_buffers,
-	unsigned long length)
+	unsigned long length, int force_pmem)
 {
 	unsigned long len, phys_addr;
 	struct file *file = NULL;
@@ -691,7 +691,7 @@ u32 vidc_insert_addr_table(struct video_client_ctx *client_ctx,
 			__func__, client_ctx, user_vaddr);
 		goto bail_out_add;
 	} else {
-		if (!vcd_get_ion_status()) {
+		if ( (buffer == BUFFER_TYPE_INPUT && force_pmem ) || !vcd_get_ion_status()) {
 			if (get_pmem_file(pmem_fd, &phys_addr,
 					kernel_vaddr, &len, &file)) {
 				ERR("%s(): get_pmem_file failed\n", __func__);

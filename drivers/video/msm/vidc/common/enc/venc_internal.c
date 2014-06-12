@@ -1621,6 +1621,7 @@ u32 vid_enc_set_buffer(struct video_client_ctx *client_ctx,
 	enum buffer_dir dir_buffer = BUFFER_TYPE_INPUT;
 	u32 vcd_status = VCD_ERR_FAIL;
 	unsigned long kernel_vaddr, length = 0;
+	int force_pmem = 1;
 
 	if (!client_ctx || !buffer_info)
 		return false;
@@ -1628,6 +1629,7 @@ u32 vid_enc_set_buffer(struct video_client_ctx *client_ctx,
 	if (buffer == VEN_BUFFER_TYPE_OUTPUT) {
 		dir_buffer = BUFFER_TYPE_OUTPUT;
 		vcd_buffer_t = VCD_BUFFER_OUTPUT;
+		force_pmem = 0;
 	}
 	length = buffer_info->sz;
 	/*If buffer cannot be set, ignore */
@@ -1636,7 +1638,7 @@ u32 vid_enc_set_buffer(struct video_client_ctx *client_ctx,
 					&kernel_vaddr,
 					buffer_info->fd,
 					(unsigned long)buffer_info->offset,
-					VID_ENC_MAX_NUM_OF_BUFF, length)) {
+					VID_ENC_MAX_NUM_OF_BUFF, length, force_pmem)) {
 		DBG("%s() : user_virt_addr = %p cannot be set.",
 		    __func__, buffer_info->pbuffer);
 		return false;
