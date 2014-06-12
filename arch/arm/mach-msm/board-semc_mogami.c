@@ -47,7 +47,6 @@
 #include <mach/qdsp5v2/msm_lpa.h>
 #include <mach/dma.h>
 #include <linux/android_pmem.h>
-#include <linux/fmem.h>
 #include <mach/pmic.h>
 #include <mach/rpc_pmapp.h>
 #include <mach/qdsp5v2/aux_pcm.h>
@@ -2982,23 +2981,12 @@ static struct android_pmem_platform_data android_pmem_adsp_pdata = {
 	.allocator_type = PMEM_ALLOCATORTYPE_BITMAP,
 	.cached = 1,
 	.memory_type = MEMTYPE_EBI0,
-	.request_region = request_fmem_c_region,
-	.release_region = release_fmem_c_region,
-	.reusable = 1,
 };
 
 static struct platform_device android_pmem_adsp_device = {
        .name = "android_pmem",
        .id = 0,
        .dev = { .platform_data = &android_pmem_adsp_pdata },
-};
-
-static struct fmem_platform_data fmem_pdata;
-
-static struct platform_device fmem_device = {
-	.name = "fmem",
-	.id = -1,
-	.dev = { .platform_data = &fmem_pdata },
 };
 
 static int display_power(int on)
@@ -3232,7 +3220,6 @@ static struct platform_device *devices[] __initdata = {
 	&msm_rotator_device,
 #endif
 	&android_pmem_adsp_device,
-	&fmem_device,
 	&msm_device_i2c,
 	&msm_device_i2c_2,
 	&msm_device_uart_dm1,
@@ -4079,8 +4066,13 @@ static void __init size_pmem_devices(void)
 {
 #ifdef CONFIG_ANDROID_PMEM
 	android_pmem_adsp_pdata.size = MSM_PMEM_ADSP_SIZE;
-	fmem_pdata.size = MSM_PMEM_ADSP_SIZE;
-	fmem_pdata.align = PAGE_SIZE;
+#endif
+}
+
+static void __init reserve_pmem_memory(void)
+{
+#ifdef CONFIG_ANDROID_PMEM
+	msm7x30_reserve_table[MEMTYPE_EBI0].size += MSM_PMEM_ADSP_SIZE;
 #endif
 }
 
@@ -4111,6 +4103,7 @@ static void __init reserve_ion_memory(void)
 static void __init msm7x30_calculate_reserve_sizes(void)
 {
 	size_pmem_devices();
+	reserve_pmem_memory();
 	reserve_mdp_memory();
 	size_ion_devices();
 	reserve_ion_memory();
@@ -4142,8 +4135,6 @@ static void __init msm7x30_reserve(void)
 			0x0,
 			0x20000000);
 #endif
-	fmem_pdata.phys =
-		reserve_memory_for_fmem(fmem_pdata.size, fmem_pdata.align);
 #ifdef CONFIG_ANDROID_PERSISTENT_RAM
 	add_persistent_ram();
 #endif
