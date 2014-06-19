@@ -39,6 +39,9 @@ struct msm_serial_hs_platform_data {
 	/* bool: inject char into rx tty on wakeup */
 	unsigned char inject_rx_on_wakeup;
 	char rx_to_inject;
+#ifdef CONFIG_SERIAL_MSM_HS_TI
+	int (*gpio_config)(int);
+#endif
 	unsigned config_gpio;
 	int uart_tx_gpio;
 	int uart_rx_gpio;
