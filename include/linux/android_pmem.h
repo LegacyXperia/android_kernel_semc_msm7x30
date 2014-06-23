@@ -105,6 +105,8 @@ enum pmem_allocator_type {
 	PMEM_ALLOCATORTYPE_ALLORNOTHING,
 	PMEM_ALLOCATORTYPE_BUDDYBESTFIT,
 
+	PMEM_ALLOCATORTYPE_DMA,
+
 	PMEM_ALLOCATORTYPE_MAX,
 };
 
@@ -155,6 +157,10 @@ struct android_pmem_platform_data
 	 * indicates this pmem may be reused via fmem
 	 */
 	int reusable;
+	/*
+	 * private data
+	 */
+	void *private_data;
 };
 
 int pmem_setup(struct android_pmem_platform_data *pdata,
