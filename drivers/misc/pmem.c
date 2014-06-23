@@ -32,6 +32,7 @@
 #include <linux/vmalloc.h>
 #include <linux/io.h>
 #include <linux/mm_types.h>
+#include <linux/dma-mapping.h>
 #include <asm/io.h>
 #include <asm/uaccess.h>
 #include <asm/cacheflush.h>
@@ -135,6 +136,7 @@ struct alloc_list {
 	unsigned int size;           /* total size of allocation    */
 	unsigned char __iomem *vaddr; /* Virtual addr                */
 	struct list_head allocs;
+	void *private_data;
 };
 
 struct pmem_info {
@@ -207,6 +209,11 @@ struct pmem_info {
 			unsigned long used;      /* Bytes currently allocated */
 			struct list_head alist;  /* List of allocations       */
 		} system_mem;
+
+		struct {
+			unsigned long used;      /* Bytes currently allocated */
+			struct list_head alist;  /* List of allocations       */
+		} dma;
 	} allocator;
 
 	int id;
@@ -250,6 +257,10 @@ struct pmem_info {
 	 * memory will be reused through fmem
 	 */
 	int reusable;
+	/*
+	 * private data
+	 */
+	void *private_data;
 };
 #define to_pmem_info_id(a) (container_of(a, struct pmem_info, kobj)->id)
 
@@ -370,6 +381,8 @@ static ssize_t show_pmem_allocator_type(int id, char *buf)
 		return scnprintf(buf, PAGE_SIZE, "%s\n", "Bitmap");
 	case PMEM_ALLOCATORTYPE_SYSTEM:
 		return scnprintf(buf, PAGE_SIZE, "%s\n", "System heap");
+	case PMEM_ALLOCATORTYPE_DMA:
+		return scnprintf(buf, PAGE_SIZE, "%s\n", "DMA heap");
 	default:
 		return scnprintf(buf, PAGE_SIZE,
 			"??? Invalid allocator type (%d) for this region! "
@@ -550,6 +563,12 @@ static struct attribute *pmem_system_attrs[] = {
 	NULL
 };
 
+static struct attribute *pmem_dma_attrs[] = {
+	PMEM_COMMON_SYSFS_ATTRS,
+
+	NULL
+};
+
 static struct kobj_type pmem_bitmap_ktype = {
 	.sysfs_ops = &pmem_ops,
 	.default_attrs = pmem_bitmap_attrs,
@@ -558,6 +577,11 @@ static struct kobj_type pmem_bitmap_ktype = {
 static struct kobj_type pmem_system_ktype = {
 	.sysfs_ops = &pmem_ops,
 	.default_attrs = pmem_system_attrs,
+};
+
+static struct kobj_type pmem_dma_ktype = {
+	.sysfs_ops = &pmem_ops,
+	.default_attrs = pmem_dma_attrs,
 };
 
 static int pmem_allocate_from_id(const int id, const unsigned long size,
@@ -853,6 +877,27 @@ static int pmem_free_system(int id, int index)
 	return 0;
 }
 
+static int pmem_free_dma(int id, int index)
+{
+	/* caller should hold the lock on arena_mutex! */
+	struct alloc_list *item;
+
+	DLOG("index %d\n", index);
+	if (index != 0)
+		item = (struct alloc_list *)index;
+	else
+		return 0;
+
+	if (item->vaddr != NULL) {
+		dma_free_coherent(item->private_data, item->size,
+				item->vaddr, (dma_addr_t)item->addr);
+		list_del(&item->allocs);
+		kfree(item);
+	}
+
+	return 0;
+}
+
 static int pmem_free_space_bitmap(int id, struct pmem_freespace *fs)
 {
 	int i, j;
@@ -902,6 +947,14 @@ static int pmem_free_space_bitmap(int id, struct pmem_freespace *fs)
 }
 
 static int pmem_free_space_system(int id, struct pmem_freespace *fs)
+{
+	fs->total = pmem[id].size;
+	fs->largest = pmem[id].size;
+
+	return 0;
+}
+
+static int pmem_free_space_dma(int id, struct pmem_freespace *fs)
 {
 	fs->total = pmem[id].size;
 	fs->largest = pmem[id].size;
@@ -1403,6 +1456,51 @@ static int pmem_allocator_system(const int id,
 	return (int)list;
 }
 
+static int pmem_allocator_dma(const int id,
+		const unsigned long len,
+		const unsigned int align)
+{
+	/* caller should hold the lock on arena_mutex! */
+	struct alloc_list *list;
+	unsigned long aligned_len;
+	dma_addr_t handle;
+
+	DLOG("dma id %d, len %ld, align %u\n", id, len, align);
+
+	if ((pmem[id].allocator.dma.used + len) > pmem[id].size) {
+		DLOG("requested size would be larger than quota\n");
+		return -1;
+	}
+
+	/* Handle alignment */
+	aligned_len = len + align;
+
+	/* Attempt allocation */
+	list = kmalloc(sizeof(struct alloc_list), GFP_KERNEL);
+	if (list == NULL) {
+		printk(KERN_ERR "pmem: failed to allocate dma metadata\n");
+		return -1;
+	}
+	list->vaddr = NULL;
+
+	if (!pmem[id].cached)
+		list->vaddr = dma_alloc_writecombine(pmem[id].private_data,
+				aligned_len, &handle, 0);
+	else
+		list->vaddr = dma_alloc_nonconsistent(pmem[id].private_data,
+				aligned_len, &handle, 0);
+	list->size = aligned_len;
+	list->addr = (void *)handle;
+	list->aaddr = (void *)(((unsigned int)(list->addr) + (align - 1)) &
+			~(align - 1));
+	list->private_data = pmem[id].private_data;
+
+	INIT_LIST_HEAD(&list->allocs);
+	list_add(&list->allocs, &pmem[id].allocator.dma.alist);
+
+	return (int)list;
+}
+
 static pgprot_t pmem_phys_mem_access_prot(struct file *file, pgprot_t vma_prot)
 {
 	int id = get_id(file);
@@ -1440,9 +1538,15 @@ static unsigned long pmem_start_addr_system(int id, struct pmem_data *data)
 	return (unsigned long)(((struct alloc_list *)(data->index))->aaddr);
 }
 
+static unsigned long pmem_start_addr_dma(int id, struct pmem_data *data)
+{
+	return (unsigned long)(((struct alloc_list *)(data->index))->aaddr);
+}
+
 static void *pmem_start_vaddr(int id, struct pmem_data *data)
 {
-	if (pmem[id].allocator_type == PMEM_ALLOCATORTYPE_SYSTEM)
+	if (pmem[id].allocator_type == PMEM_ALLOCATORTYPE_SYSTEM ||
+		pmem[id].allocator_type == PMEM_ALLOCATORTYPE_DMA)
 		return ((struct alloc_list *)(data->index))->vaddr;
 	else
 	return pmem[id].start_addr(id, data) - pmem[id].base + pmem[id].vbase;
@@ -1483,6 +1587,18 @@ static unsigned long pmem_len_bitmap(int id, struct pmem_data *data)
 }
 
 static unsigned long pmem_len_system(int id, struct pmem_data *data)
+{
+	unsigned long ret = 0;
+
+	mutex_lock(&pmem[id].arena_mutex);
+
+	ret = ((struct alloc_list *)data->index)->size;
+	mutex_unlock(&pmem[id].arena_mutex);
+
+	return ret;
+}
+
+static unsigned long pmem_len_dma(int id, struct pmem_data *data)
 {
 	unsigned long ret = 0;
 
@@ -1923,7 +2039,8 @@ void flush_pmem_file(struct file *file, unsigned long offset, unsigned long len)
 
 	vaddr = pmem_start_vaddr(id, data);
 
-	if (pmem[id].allocator_type == PMEM_ALLOCATORTYPE_SYSTEM) {
+	if (pmem[id].allocator_type == PMEM_ALLOCATORTYPE_SYSTEM ||
+		pmem[id].allocator_type == PMEM_ALLOCATORTYPE_DMA) {
 		dmac_flush_range(vaddr,
 			(void *)((unsigned long)vaddr +
 				 ((struct alloc_list *)(data->index))->size));
@@ -2773,6 +2890,31 @@ int pmem_setup(struct android_pmem_platform_data *pdata,
 			id, pdata->name, pmem[id].size);
 		break;
 
+	case PMEM_ALLOCATORTYPE_DMA:
+
+		INIT_LIST_HEAD(&pmem[id].allocator.dma.alist);
+
+		pmem[id].allocator.dma.used = 0;
+		pmem[id].vbase = NULL;
+
+		if (kobject_init_and_add(&pmem[id].kobj,
+				&pmem_dma_ktype, NULL,
+				"%s", pdata->name))
+			goto out_put_kobj;
+
+		pmem[id].allocate = pmem_allocator_dma;
+		pmem[id].free = pmem_free_dma;
+		pmem[id].free_space = pmem_free_space_dma;
+		pmem[id].len = pmem_len_dma;
+		pmem[id].start_addr = pmem_start_addr_dma;
+		pmem[id].num_entries = 0;
+		pmem[id].quantum = PAGE_SIZE;
+		pmem[id].private_data = pdata->private_data;
+
+		DLOG("dma allocator id %d (%s), raw size %lu\n",
+			id, pdata->name, pmem[id].size);
+		break;
+
 	default:
 		pr_alert("Invalid allocator type (%d) for pmem driver\n",
 			pdata->allocator_type);
@@ -2797,7 +2939,8 @@ int pmem_setup(struct android_pmem_platform_data *pdata,
 		goto err_cant_register_device;
 	}
 
-	if (!pmem[id].reusable) {
+	if (!pmem[id].reusable &&
+		pmem[id].allocator_type != PMEM_ALLOCATORTYPE_DMA) {
 		pmem[id].base = allocate_contiguous_memory_nomap(pmem[id].size,
 			pmem[id].memory_type, PAGE_SIZE);
 		if (!pmem[id].base) {
