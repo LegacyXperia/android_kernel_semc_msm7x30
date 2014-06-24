@@ -2984,9 +2984,9 @@ static struct android_pmem_platform_data android_pmem_adsp_pdata = {
 };
 
 static struct platform_device android_pmem_adsp_device = {
-       .name = "android_pmem",
-       .id = 0,
-       .dev = { .platform_data = &android_pmem_adsp_pdata },
+	.name = "android_pmem",
+	.id = 0,
+	.dev = { .platform_data = &android_pmem_adsp_pdata },
 };
 
 static int display_power(int on)
