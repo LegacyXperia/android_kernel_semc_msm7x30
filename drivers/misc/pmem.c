@@ -1485,10 +1485,10 @@ static int pmem_allocator_dma(const int id,
 
 	if (!pmem[id].cached)
 		list->vaddr = dma_alloc_writecombine(pmem[id].private_data,
-				aligned_len, &handle, 0);
+				aligned_len, &handle, GFP_KERNEL);
 	else
 		list->vaddr = dma_alloc_nonconsistent(pmem[id].private_data,
-				aligned_len, &handle, 0);
+				aligned_len, &handle, GFP_KERNEL);
 
 	if (!list->vaddr) {
 		pr_err("pmem: dma alloc failed for id=%d len=%ld\n",
