@@ -1489,6 +1489,14 @@ static int pmem_allocator_dma(const int id,
 	else
 		list->vaddr = dma_alloc_nonconsistent(pmem[id].private_data,
 				aligned_len, &handle, 0);
+
+	if (!list->vaddr) {
+		pr_err("pmem: dma alloc failed for id=%d len=%ld\n",
+			id, aligned_len);
+		kfree(list);
+		return -1;
+	}
+
 	list->size = aligned_len;
 	list->addr = (void *)handle;
 	list->aaddr = (void *)(((unsigned int)(list->addr) + (align - 1)) &
