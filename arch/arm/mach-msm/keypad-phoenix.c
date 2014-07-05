@@ -38,8 +38,8 @@ struct pm8xxx_keypad_platform_data pm8xxx_keypad_data = {
 
 /* phoenix PMIC keypad - start */
 #define BACK_GPIO		17
-#define HOME_GPIO		18
-#define MENU_GPIO		19
+#define HOME_GPIO		19
+#define MENU_GPIO		18
 #define SEARCH_GPIO		26
 
 #define NO_BATT_COV_N_GPIO	31
