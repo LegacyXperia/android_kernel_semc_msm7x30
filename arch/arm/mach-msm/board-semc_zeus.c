@@ -187,7 +187,11 @@ static u64 msm_dmamask = DMA_BIT_MASK(32);
 
 #ifdef CONFIG_ION_MSM
 static struct platform_device ion_dev;
-#define MSM_ION_MM_SIZE		0x1B00000
+#ifdef CONFIG_MSM_ION_MM_USE_CMA
+#define MSM_ION_MM_SIZE		0x3000000
+#else
+#define MSM_ION_MM_SIZE		0x1C80000
+#endif
 #define MSM_ION_AUDIO_SIZE	0x200000
 #define MSM_ION_SF_SIZE		0x1700000
 #define MSM_ION_WB_SIZE		MSM_FB_OVERLAY0_WRITEBACK_SIZE
