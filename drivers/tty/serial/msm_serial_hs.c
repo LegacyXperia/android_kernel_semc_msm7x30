@@ -196,7 +196,9 @@ struct msm_hs_port {
 #define UARTDM_NR 256
 #define RX_FLUSH_COMPLETE_TIMEOUT 300 /* In jiffies */
 
+#ifdef CONFIG_DEBUG_FS
 static struct dentry *debug_base;
+#endif
 static struct msm_hs_port q_uart_port[UARTDM_NR];
 static struct platform_driver msm_serial_hs_platform_driver;
 static struct uart_driver msm_hs_driver;
@@ -451,6 +453,7 @@ static int msm_serial_loopback_enable_get(void *data, u64 *val)
 DEFINE_SIMPLE_ATTRIBUTE(loopback_enable_fops, msm_serial_loopback_enable_get,
 			msm_serial_loopback_enable_set, "%llu\n");
 
+#ifdef CONFIG_DEBUG_FS
 /*
  * msm_serial_hs debugfs node: <debugfs_root>/msm_serial_hs/loopback.<id>
  * writing 1 turns on internal loopback mode in HW. Useful for automation
@@ -472,6 +475,7 @@ static void __devinit msm_serial_debugfs_init(struct msm_hs_port *msm_uport,
 		pr_err("%s(): Cannot create loopback.%d debug entry",
 							__func__, id);
 }
+#endif
 
 static int __devexit msm_hs_remove(struct platform_device *pdev)
 {
@@ -488,7 +492,9 @@ static int __devexit msm_hs_remove(struct platform_device *pdev)
 	dev = msm_uport->uport.dev;
 
 	sysfs_remove_file(&pdev->dev.kobj, &dev_attr_clock.attr);
+#ifdef CONFIG_DEBUG_FS
 	debugfs_remove(msm_uport->loopback_dir);
+#endif
 
 	dma_unmap_single(dev, msm_uport->rx.mapped_cmd_ptr, sizeof(dmov_box),
 			 DMA_TO_DEVICE);
@@ -2576,7 +2582,9 @@ static int __devinit msm_hs_probe(struct platform_device *pdev)
 	if (unlikely(ret))
 		return ret;
 
+#ifdef CONFIG_DEBUG_FS
 	msm_serial_debugfs_init(msm_uport, pdev->id);
+#endif
 
 	uport->line = pdev->id;
 	if (pdata != NULL && pdata->userid && pdata->userid <= UARTDM_NR)
@@ -2598,14 +2606,18 @@ static int __init msm_serial_hs_init(void)
 		printk(KERN_ERR "%s failed to load\n", __FUNCTION__);
 		return ret;
 	}
+#ifdef CONFIG_DEBUG_FS
 	debug_base = debugfs_create_dir("msm_serial_hs", NULL);
 	if (IS_ERR_OR_NULL(debug_base))
 		pr_info("msm_serial_hs: Cannot create debugfs dir\n");
+#endif
 
 	ret = platform_driver_register(&msm_serial_hs_platform_driver);
 	if (ret) {
 		printk(KERN_ERR "%s failed to load\n", __FUNCTION__);
+#ifdef CONFIG_DEBUG_FS
 		debugfs_remove_recursive(debug_base);
+#endif
 		uart_unregister_driver(&msm_hs_driver);
 		return ret;
 	}
@@ -2732,7 +2744,9 @@ static void msm_hs_shutdown(struct uart_port *uport)
 static void __exit msm_serial_hs_exit(void)
 {
 	printk(KERN_INFO "msm_serial_hs module removed\n");
+#ifdef CONFIG_DEBUG_FS
 	debugfs_remove_recursive(debug_base);
+#endif
 	platform_driver_unregister(&msm_serial_hs_platform_driver);
 	uart_unregister_driver(&msm_hs_driver);
 }
