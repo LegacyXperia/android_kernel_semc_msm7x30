@@ -1553,8 +1553,7 @@ static unsigned long pmem_start_addr_dma(int id, struct pmem_data *data)
 
 static void *pmem_start_vaddr(int id, struct pmem_data *data)
 {
-	if (pmem[id].allocator_type == PMEM_ALLOCATORTYPE_SYSTEM ||
-		pmem[id].allocator_type == PMEM_ALLOCATORTYPE_DMA)
+	if (pmem[id].allocator_type == PMEM_ALLOCATORTYPE_SYSTEM)
 		return ((struct alloc_list *)(data->index))->vaddr;
 	else
 	return pmem[id].start_addr(id, data) - pmem[id].base + pmem[id].vbase;
@@ -2047,8 +2046,7 @@ void flush_pmem_file(struct file *file, unsigned long offset, unsigned long len)
 
 	vaddr = pmem_start_vaddr(id, data);
 
-	if (pmem[id].allocator_type == PMEM_ALLOCATORTYPE_SYSTEM ||
-		pmem[id].allocator_type == PMEM_ALLOCATORTYPE_DMA) {
+	if (pmem[id].allocator_type == PMEM_ALLOCATORTYPE_SYSTEM) {
 		dmac_flush_range(vaddr,
 			(void *)((unsigned long)vaddr +
 				 ((struct alloc_list *)(data->index))->size));
