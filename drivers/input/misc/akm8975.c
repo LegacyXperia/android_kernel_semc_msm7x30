@@ -560,8 +560,10 @@ static int akm8975_suspend(struct device *dev)
 	disable_irq(this_client->irq);
 	if (pdata && pdata->shutdown)
 		pdata->shutdown();
+#ifdef DEBUG_SUSPEND_RESUME
 	AKMDBG("suspended with flag=%d",
 	       atomic_read(&reserve_open_flag));
+#endif
 	return 0;
 }
 
@@ -574,8 +576,10 @@ static int akm8975_resume(struct device *dev)
 	atomic_set(&suspend_flag, 0);
 	atomic_set(&open_flag, atomic_read(&reserve_open_flag));
 	wake_up(&open_wq);
+#ifdef DEBUG_SUSPEND_RESUME
 	AKMDBG("resumed with flag=%d",
 	       atomic_read(&reserve_open_flag));
+#endif
 	return 0;
 }
 
