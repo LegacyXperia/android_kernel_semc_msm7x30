@@ -1541,8 +1541,10 @@ static int lm356x_suspend(struct device *dev)
 		goto exit_suspend;
 	}
 
+#ifdef DEBUG_SUSPEND_RESUME
 	dev_info(&data->client->dev,
 		 "%s: Suspending LM356X driver.\n", __func__);
+#endif
 
 exit_suspend:
 	mutex_unlock(&data->lock);
@@ -1563,15 +1565,19 @@ static int lm356x_resume(struct device *dev)
 		goto exit_resume;
 	}
 
+#ifdef DEBUG_SUSPEND_RESUME
 	dev_info(dev, "%s: Reinit lm356x chip.\n", __func__);
+#endif
 	result = lm356x_chip_init(data, pdata);
 	if (result) {
 		dev_err(dev, "%s:chip init error\n", __func__);
 		goto exit_resume;
 	}
 
+#ifdef DEBUG_SUSPEND_RESUME
 	dev_info(&data->client->dev,
 		 "%s: Resuming LM356X driver.\n", __func__);
+#endif
 
 exit_resume:
 	mutex_unlock(&data->lock);

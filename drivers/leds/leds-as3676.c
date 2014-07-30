@@ -596,7 +596,10 @@ MODULE_DEVICE_TABLE(i2c, as3676_id);
 static int as3676_suspend(struct device *dev)
 {
 	struct as3676_data *data = dev_get_drvdata(dev);
+
+#ifdef DEBUG_SUSPEND_RESUME
 	dev_info(dev, "Suspending AS3676\n");
+#endif
 
 	AS3676_LOCK();
 	data->als_control_backup = AS3676_READ_REG(AS3676_REG_ALS_control);
@@ -616,7 +619,9 @@ static int as3676_resume(struct device *dev)
 {
 	struct as3676_data *data = dev_get_drvdata(dev);
 
+#ifdef DEBUG_SUSPEND_RESUME
 	dev_info(dev, "Resuming AS3676\n");
+#endif
 
 	AS3676_LOCK();
 	AS3676_WRITE_REG(AS3676_REG_ALS_result, data->als_result_backup);
