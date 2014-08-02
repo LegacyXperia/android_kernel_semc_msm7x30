@@ -240,10 +240,12 @@ static u64 msm_dmamask = DMA_BIT_MASK(32);
 #endif
 
 #ifdef CONFIG_ANDROID_PMEM
+#ifndef CONFIG_ANDROID_PMEM_ION_WRAPPER
 #ifdef CONFIG_SEMC_CAMERA_8MP
 #define MSM_PMEM_ADSP_SIZE      0x2F00000
 #else
 #define MSM_PMEM_ADSP_SIZE      0x2000000
+#endif
 #endif
 #endif
 
@@ -2991,9 +2993,13 @@ static struct platform_device msm_migrate_pages_device = {
 #ifdef CONFIG_ANDROID_PMEM
 static struct android_pmem_platform_data android_pmem_adsp_pdata = {
 	.name = "pmem_adsp",
+#ifndef CONFIG_ANDROID_PMEM_ION_WRAPPER
 	.allocator_type = PMEM_ALLOCATORTYPE_BITMAP,
 	.cached = 1,
 	.memory_type = MEMTYPE_EBI0,
+#else
+	.ion_heap_id = ION_CP_MM_HEAP_ID,
+#endif
 };
 
 static struct platform_device android_pmem_adsp_device = {
@@ -4087,14 +4093,18 @@ static struct memtype_reserve msm7x30_reserve_table[] __initdata = {
 static void __init size_pmem_devices(void)
 {
 #ifdef CONFIG_ANDROID_PMEM
+#ifndef CONFIG_ANDROID_PMEM_ION_WRAPPER
 	android_pmem_adsp_pdata.size = MSM_PMEM_ADSP_SIZE;
+#endif
 #endif
 }
 
 static void __init reserve_pmem_memory(void)
 {
 #ifdef CONFIG_ANDROID_PMEM
+#ifndef CONFIG_ANDROID_PMEM_ION_WRAPPER
 	msm7x30_reserve_table[MEMTYPE_EBI0].size += MSM_PMEM_ADSP_SIZE;
+#endif
 #endif
 }
 
