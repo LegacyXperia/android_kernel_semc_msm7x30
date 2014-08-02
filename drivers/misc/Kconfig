@@ -55,6 +55,12 @@ config ANDROID_PMEM
 	bool "Android pmem allocator"
 	default y
 
+config ANDROID_PMEM_ION_WRAPPER
+	bool "Android PMEM->ION wrapper"
+	help
+	  This enables a custom PMEM driver, which has the only purpose of
+	  redirecting all PMEM allocations to ION.
+
 config ATMEL_PWM
 	tristate "Atmel AT32/AT91 PWM support"
 	depends on HAVE_CLK
