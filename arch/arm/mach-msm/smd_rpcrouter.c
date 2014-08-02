@@ -215,9 +215,12 @@ static DEFINE_MUTEX(xprt_info_list_lock);
 DECLARE_COMPLETION(rpc_remote_router_up);
 static atomic_t pending_close_count = ATOMIC_INIT(0);
 
+static bool rpc_reboot_call = false;
+
 static int msm_rpc_reboot_call(struct notifier_block *this,
 			unsigned long code, void *_cmd)
 {
+	 rpc_reboot_call = true;
 	 switch (code) {
 	 case SYS_RESTART:
 	 case SYS_HALT:
@@ -1989,6 +1992,9 @@ static struct msm_rpc_endpoint *__msm_rpc_connect(uint32_t prog, uint32_t vers,
 	int rc = 0;
 
 	DEFINE_WAIT(__wait);
+
+	if (rpc_reboot_call)
+		return ERR_PTR(-EPERM);
 
 	for (;;) {
 		prepare_to_wait(&newserver_wait, &__wait,
