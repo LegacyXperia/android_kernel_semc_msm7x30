@@ -2486,16 +2486,6 @@ config MSM_ION_MM_USE_CMA
 	  through CMA framework and can be re-allocated when it's not being
 	  used by any client.
 
-config MSM_PMEM_ADSP_USE_CMA
-	bool "Use CMA for PMEM ADSP heap"
-	depends on ANDROID_PMEM && (BOARD_SEMC_MOGAMI || BOARD_SEMC_ZEUS)
-	select CMA
-	help
-	  Enable switching from PMEM bitmap allocator to DMA allocator for
-	  PMEM ADSP heap. The memory area will be dynamically allocated through
-	  CMA framework and can be re-allocated when it's not being used by
-	  any client.
-
 config MSM_OCMEM
 	bool "MSM On-Chip memory driver (OCMEM)"
 	help
