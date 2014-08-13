@@ -309,17 +309,27 @@ void put_pmem_fd(int fd)
 }
 EXPORT_SYMBOL(put_pmem_fd);
 
-void flush_pmem_fd(int fd, unsigned long start, unsigned long len)
+void flush_pmem_fd(int fd, unsigned long offset, unsigned long len)
 {
-	pr_debug("%s\n", __func__);
-	/* TODO */
+	int fput_needed;
+	struct file *file = fget_light(fd, &fput_needed);
+
+	if (file) {
+		flush_pmem_file(file, offset, len);
+		fput_light(file, fput_needed);
+	}
 }
 EXPORT_SYMBOL(flush_pmem_fd);
 
-void flush_pmem_file(struct file *file, unsigned long start, unsigned long len)
+void flush_pmem_file(struct file *file, unsigned long offset, unsigned long len)
 {
-	pr_debug("%s\n", __func__);
-	/* TODO */
+	struct allocation_data *adata = file->private_data;
+	struct pmem_addr addr;
+
+	addr.vaddr = (unsigned long)adata->kvaddr;
+	addr.offset = offset;
+	addr.length = len;
+	pmem_cache_maint(file, PMEM_CLEAN_INV_CACHES, &addr);
 }
 EXPORT_SYMBOL(flush_pmem_file);
 
