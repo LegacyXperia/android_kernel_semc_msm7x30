@@ -75,7 +75,7 @@ static int pmem_set_adata(struct allocation_data *adata)
 		return -EINVAL;
 	}
 
-	if (!adata->handle || !adata->client) {
+	if (IS_ERR_OR_NULL(adata->client) || IS_ERR_OR_NULL(adata->handle)) {
 		pr_err("%s: Invalid allocation data\n", __func__);
 		return -EPERM;
 	}
@@ -104,7 +104,7 @@ static int pmem_remove_adata(struct allocation_data *adata)
 		return -EINVAL;
 	}
 
-	if (!adata->handle || !adata->client) {
+	if (IS_ERR_OR_NULL(adata->client) || IS_ERR_OR_NULL(adata->handle)) {
 		pr_err("%s: Invalid allocation data\n", __func__);
 		return -EPERM;
 	}
@@ -135,7 +135,7 @@ static int pmem_allocate(
 		goto err;
 	}
 
-	if (!adata->client || !adata->heap_id) {
+	if (IS_ERR_OR_NULL(adata->client) || !adata->heap_id) {
 		pr_err("%s: Invalid allocation data\n", __func__);
 		ret = -EPERM;
 		goto err;
@@ -174,7 +174,7 @@ static int pmem_free(struct allocation_data *adata)
 		return -EINVAL;
 	}
 
-	if (!adata->client || !adata->handle) {
+	if (IS_ERR_OR_NULL(adata->client) || IS_ERR_OR_NULL(adata->handle)) {
 		pr_err("%s: Invalid allocation data\n", __func__);
 		return -EPERM;
 	}
@@ -212,7 +212,23 @@ int get_pmem_file(unsigned int fd, unsigned long *start, unsigned long *vstart,
 		adata = kzalloc(sizeof(*adata), GFP_KERNEL);
 		/* Get PMEM client 0 ION client. */
 		adata->client = pmem[0].client;
+		if (IS_ERR_OR_NULL(adata->client)) {
+			ret = PTR_ERR(adata->client);
+			pr_err("%s: Invalid ion client ret=%d\n",
+				__func__, ret);
+			kfree(adata);
+			kfree(file);
+			return ret;
+		}
 		adata->handle = ion_import_dma_buf(adata->client, fd);
+		if (IS_ERR_OR_NULL(adata->handle)) {
+			ret = PTR_ERR(adata->handle);
+			pr_err("%s: Failed to ion_import_dma_buf ret=%d\n",
+				__func__, ret);
+			kfree(adata);
+			kfree(file);
+			return ret;
+		}
 		adata->vma = NULL;
 
 		ret = pmem_set_adata(adata);
@@ -313,7 +329,7 @@ int pmem_cache_maint(struct file *file, unsigned int cmd,
 	int ret = -EINVAL;
 	struct allocation_data *adata = file->private_data;
 
-	if (!adata->handle)
+	if (IS_ERR_OR_NULL(adata->handle))
 		return -EINVAL;
 
 	switch (cmd) {
@@ -351,7 +367,7 @@ static long pmem_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 	case PMEM_GET_PHYS: {
 		struct pmem_region region;
 
-		if (!adata->handle)
+		if (IS_ERR_OR_NULL(adata->handle))
 			return -ENOMEM;
 
 		region.offset = adata->addr;
