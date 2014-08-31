@@ -146,12 +146,10 @@ static int rpcrouter_smd_remote_qdsp_probe(struct platform_device *pdev)
 {
 	int rc;
 
-	smd_remote_qdsp_xprt.xprt.name = "rpcrotuer_smd_qdsp_xprt";
-	smd_remote_qdsp_xprt.xprt.read_avail =
-			rpcrouter_smd_remote_qdsp_read_avail;
+	smd_remote_qdsp_xprt.xprt.name = "rpcrouter_smd_qdsp_xprt";
+	smd_remote_qdsp_xprt.xprt.read_avail = rpcrouter_smd_remote_qdsp_read_avail;
 	smd_remote_qdsp_xprt.xprt.read = rpcrouter_smd_remote_qdsp_read;
-	smd_remote_qdsp_xprt.xprt.write_avail =
-			rpcrouter_smd_remote_qdsp_write_avail;
+	smd_remote_qdsp_xprt.xprt.write_avail = rpcrouter_smd_remote_qdsp_write_avail;
 	smd_remote_qdsp_xprt.xprt.write = rpcrouter_smd_remote_qdsp_write;
 	smd_remote_qdsp_xprt.xprt.close = rpcrouter_smd_remote_qdsp_close;
 	smd_remote_qdsp_xprt.xprt.priv = NULL;
@@ -286,7 +284,7 @@ static int rpcrouter_smd_remote_probe(struct platform_device *pdev)
 {
 	int rc;
 
-	smd_remote_xprt.xprt.name = "rpcrotuer_smd_xprt";
+	smd_remote_xprt.xprt.name = "rpcrouter_smd_xprt";
 	smd_remote_xprt.xprt.read_avail = rpcrouter_smd_remote_read_avail;
 	smd_remote_xprt.xprt.read = rpcrouter_smd_remote_read;
 	smd_remote_xprt.xprt.write_avail = rpcrouter_smd_remote_write_avail;
