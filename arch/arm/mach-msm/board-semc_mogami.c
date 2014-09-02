@@ -3900,9 +3900,6 @@ static void __init msm7x30_init(void)
 #endif
 #endif
 	msm_uart_dm1_pdata.wakeup_irq = gpio_to_irq(136);
-#ifdef CONFIG_SERIAL_MSM_HS_TI
-	msm_device_uart_dm1.name = "msm_serial_hs_ti"; /* for ti */
-#endif
 	msm_device_uart_dm1.dev.platform_data = &msm_uart_dm1_pdata;
 
 	buses_init();
