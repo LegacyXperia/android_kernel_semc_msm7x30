@@ -8,6 +8,7 @@
  * directory of this archive for more details.
  */
 
+#include <linux/slab.h>
 #include <linux/i2c.h>
 #include <linux/leds.h>
 #include <linux/module.h>
