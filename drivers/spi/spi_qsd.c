@@ -2010,6 +2010,23 @@ static int __init msm_spi_probe(struct platform_device *pdev)
 	}
 
 skip_dma_resources:
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+	if (pdata) {
+		if (pdata->gpio_config) {
+			rc = pdata->gpio_config();
+			if (rc) {
+				dev_err(&pdev->dev,
+					"%s: error configuring GPIOs\n",
+					__func__);
+				goto err_probe_gpio;
+			}
+		}
+	}
+
+	rc = msm_spi_request_gpios(dd);
+	if (rc)
+		goto err_probe_gpio;
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 
 	spin_lock_init(&dd->queue_lock);
 	mutex_init(&dd->core_lock);
@@ -2184,6 +2201,12 @@ err_probe_rlock_init:
 err_probe_reqmem:
 	destroy_workqueue(dd->workqueue);
 err_probe_workq:
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+	msm_spi_free_gpios(dd);
+err_probe_gpio:
+	if (pdata && pdata->gpio_release)
+		pdata->gpio_release();
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 err_probe_res:
 	spi_master_put(master);
 err_probe_exit:
@@ -2224,9 +2247,11 @@ static int msm_spi_pm_suspend_runtime(struct device *device)
 	clk_disable_unprepare(dd->clk);
 	clk_disable_unprepare(dd->pclk);
 
+#ifndef CONFIG_BOARD_SEMC_ZEUS
 	/* Free  the spi clk, miso, mosi, cs gpio */
 	if (dd->pdata && dd->pdata->gpio_release)
 		dd->pdata->gpio_release();
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 
 	msm_spi_free_gpios(dd);
 
@@ -2258,6 +2283,7 @@ static int msm_spi_pm_resume_runtime(struct device *device)
 		pm_qos_update_request(&qos_req_list,
 				  dd->pm_lat);
 
+#ifndef CONFIG_BOARD_SEMC_ZEUS
 	/* Configure the spi clk, miso, mosi and cs gpio */
 	if (dd->pdata->gpio_config) {
 		ret = dd->pdata->gpio_config();
@@ -2268,6 +2294,7 @@ static int msm_spi_pm_resume_runtime(struct device *device)
 			return ret;
 		}
 	}
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 
 	ret = msm_spi_request_gpios(dd);
 	if (ret)
@@ -2328,13 +2355,21 @@ static int __devexit msm_spi_remove(struct platform_device *pdev)
 {
 	struct spi_master *master = platform_get_drvdata(pdev);
 	struct msm_spi    *dd = spi_master_get_devdata(master);
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+	struct msm_spi_platform_data *pdata = pdev->dev.platform_data;
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 
 	pm_qos_remove_request(&qos_req_list);
 	spi_debugfs_exit(dd);
 	sysfs_remove_group(&pdev->dev.kobj, &dev_attr_grp);
 
 	msm_spi_teardown_dma(dd);
+#ifdef CONFIG_BOARD_SEMC_ZEUS
+	if (pdata && pdata->gpio_release)
+		pdata->gpio_release();
 
+	msm_spi_free_gpios(dd);
+#endif /* CONFIG_BOARD_SEMC_ZEUS */
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	clk_put(dd->clk);
