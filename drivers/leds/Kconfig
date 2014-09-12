@@ -197,7 +197,7 @@ config LEDS_MSM_TRICOLOR
 
 config LEDS_AS3676
 	tristate "LED Support for AMS AS3676 I2C chips"
-	depends on LEDS_CLASS && I2C && !LEDS_AS3676_SEMC
+	depends on LEDS_CLASS && I2C
 	default n
 	help
 	  This option enables support for LEDs connected to AS3676
