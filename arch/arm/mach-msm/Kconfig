@@ -2817,12 +2817,6 @@ config CRADLE_SUPPORT
 	  Provides support for docking cradle. Depends on simple remote
 	  HW specific driver.
 
-config SEMC_CAMERA_8MP
-	bool "Increased PMEP_ADSP for 8MP sensors"
-	default n
-	help
-	  Increased PMEP_ADSP for phones with 8MP sensors.
-
 config FORCE_FAST_CHARGE
 	bool "Force AC charge mode at will"
 	help
