@@ -192,12 +192,6 @@
 static u64 msm_dmamask = DMA_BIT_MASK(32);
 #endif
 
-#ifdef CONFIG_ANDROID_PMEM
-#ifndef CONFIG_ANDROID_PMEM_ION_WRAPPER
-#define MSM_PMEM_ADSP_SIZE      0x242A000
-#endif
-#endif
-
 #ifdef CONFIG_ION_MSM
 static struct platform_device ion_dev;
 #ifdef CONFIG_MSM_ION_MM_USE_CMA
@@ -2386,16 +2380,10 @@ static struct platform_device msm_migrate_pages_device = {
 	.id     = -1,
 };
 
-#ifdef CONFIG_ANDROID_PMEM
+#ifdef CONFIG_ANDROID_PMEM_ION_WRAPPER
 static struct android_pmem_platform_data android_pmem_adsp_pdata = {
 	.name = "pmem_adsp",
-#ifndef CONFIG_ANDROID_PMEM_ION_WRAPPER
-	.allocator_type = PMEM_ALLOCATORTYPE_BITMAP,
-	.cached = 1,
-	.memory_type = MEMTYPE_EBI0,
-#else
 	.ion_heap_id = ION_CP_MM_HEAP_ID,
-#endif
 };
 
 static struct platform_device android_pmem_adsp_device = {
@@ -2808,7 +2796,7 @@ static struct platform_device *devices[] __initdata = {
 #ifdef CONFIG_MSM_ROTATOR
 	&msm_rotator_device,
 #endif
-#ifdef CONFIG_ANDROID_PMEM
+#ifdef CONFIG_ANDROID_PMEM_ION_WRAPPER
 	&android_pmem_adsp_device,
 #endif
 	&msm_device_i2c,
@@ -3673,24 +3661,6 @@ static struct memtype_reserve msm7x30_reserve_table[] __initdata = {
 	},
 };
 
-static void __init size_pmem_devices(void)
-{
-#ifdef CONFIG_ANDROID_PMEM
-#ifndef CONFIG_ANDROID_PMEM_ION_WRAPPER
-	android_pmem_adsp_pdata.size = MSM_PMEM_ADSP_SIZE;
-#endif
-#endif
-}
-
-static void __init reserve_pmem_memory(void)
-{
-#ifdef CONFIG_ANDROID_PMEM
-#ifndef CONFIG_ANDROID_PMEM_ION_WRAPPER
-	msm7x30_reserve_table[MEMTYPE_EBI0].size += MSM_PMEM_ADSP_SIZE;
-#endif
-#endif
-}
-
 static void __init reserve_mdp_memory(void)
 {
 	mdp_pdata.ov0_wb_size = MSM_FB_OVERLAY0_WRITEBACK_SIZE;
@@ -3720,8 +3690,6 @@ static void __init reserve_ion_memory(void)
 
 static void __init msm7x30_calculate_reserve_sizes(void)
 {
-	size_pmem_devices();
-	reserve_pmem_memory();
 	reserve_mdp_memory();
 	size_ion_devices();
 	reserve_ion_memory();
