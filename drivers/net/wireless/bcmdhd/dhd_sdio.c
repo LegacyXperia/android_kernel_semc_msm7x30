@@ -694,6 +694,8 @@ dhdsdio_sr_cap(dhd_bus_t *bus)
 			data = SI_ENUM_BASE + OFFSETOF(chipcregs_t, chipcontrol_data);
 			bcmsdh_reg_write(bus->sdh, addr, 4, 3);
 			core_capext = bcmsdh_reg_read(bus->sdh, data, 4);
+	} else if (bus->sih->chip == BCM4329_CHIP_ID) {
+			core_capext = FALSE;
 	} else if (bus->sih->chip == BCM4330_CHIP_ID) {
 			core_capext = FALSE;
 	} else if ((bus->sih->chip == BCM4335_CHIP_ID) ||
