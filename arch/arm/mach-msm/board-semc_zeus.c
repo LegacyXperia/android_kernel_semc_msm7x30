@@ -2714,6 +2714,36 @@ static struct platform_device msm_bt_power_device = {
 };
 #endif
 
+#ifdef CONFIG_BT_MSM_SLEEP
+static struct resource msm_bluesleep_resources[] = {
+	{
+		.name	= "gpio_host_wake",
+		.start	= GPIO_BT_WAKE_MSM,
+		.end	= GPIO_BT_WAKE_MSM,
+		.flags	= IORESOURCE_IO,
+	},
+	{
+		.name	= "gpio_ext_wake",
+		.start	= GPIO_MSM_WAKE_BT,
+		.end	= GPIO_MSM_WAKE_BT,
+		.flags	= IORESOURCE_IO,
+	},
+	{
+		.name	= "host_wake",
+		.start	= MSM_GPIO_TO_INT(GPIO_BT_WAKE_MSM),
+		.end	= MSM_GPIO_TO_INT(GPIO_BT_WAKE_MSM),
+		.flags	= IORESOURCE_IRQ,
+	},
+};
+
+static struct platform_device msm_bluesleep_device = {
+	.name = "bluesleep",
+	.id = -1,
+	.resource = msm_bluesleep_resources,
+	.num_resources = ARRAY_SIZE(msm_bluesleep_resources),
+};
+#endif
+
 static char *msm_adc_device_names[] = {
 	"XO_ADC",
 };
@@ -2794,6 +2824,9 @@ static struct platform_device *devices[] __initdata = {
 	&qup_device_i2c,
 #ifdef CONFIG_MSM_BT_POWER
 	&msm_bt_power_device,
+#endif
+#ifdef CONFIG_BT_MSM_SLEEP
+	&msm_bluesleep_device,
 #endif
 	&msm_kgsl_3d0,
 	&msm_kgsl_2d0,
