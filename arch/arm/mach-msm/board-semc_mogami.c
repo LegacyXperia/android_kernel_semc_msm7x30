@@ -899,7 +899,7 @@ static struct platform_device msm_camera_sensor_semc_sub_camera = {
 };
 #endif
 
-#if defined (CONFIG_MSM_VPE) || defined(CONFIG_MSM_VPE_STANDALONE)
+#ifdef CONFIG_MSM_VPE_STANDALONE
 static struct resource msm_vpe_resources[] = {
 	{
 		.start	= 0xAD200000,
@@ -912,16 +912,7 @@ static struct resource msm_vpe_resources[] = {
 		.flags	= IORESOURCE_IRQ,
 	},
 };
-#endif
-#ifdef CONFIG_MSM_VPE
-static struct platform_device msm_vpe_device = {
-       .name = "msm_vpe",
-       .id   = 0,
-       .num_resources = ARRAY_SIZE(msm_vpe_resources),
-       .resource = msm_vpe_resources,
-};
-#endif
-#ifdef CONFIG_MSM_VPE_STANDALONE
+
 static struct platform_device msm_vpe_standalone_device = {
        .name = "msm_vpe_standalone",
        .id   = 0,
@@ -3257,9 +3248,6 @@ static struct platform_device *devices[] __initdata = {
 	&msm_device_vidc_720p,
 #ifdef CONFIG_MSM_GEMINI
 	&msm_gemini_device,
-#endif
-#ifdef CONFIG_MSM_VPE
-	&msm_vpe_device,
 #endif
 #ifdef CONFIG_MSM_VPE_STANDALONE
 	&msm_vpe_standalone_device,
