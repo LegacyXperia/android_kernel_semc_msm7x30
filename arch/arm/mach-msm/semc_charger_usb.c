@@ -90,8 +90,7 @@ static int update_cradle_status(struct device *dev, void *data)
 
 	dev_dbg(dev, "%s()\n", __func__);
 	for (i = 0; i < ext->num_supplicants; i++) {
-		if (strncmp(ext->supplied_to[i], psy->name,
-			sizeof(ext->supplied_to[i])))
+		if (strcmp(ext->supplied_to[i], psy->name))
 			continue;
 
 		if (!ext->get_property(ext, POWER_SUPPLY_PROP_ONLINE, &ret)) {
