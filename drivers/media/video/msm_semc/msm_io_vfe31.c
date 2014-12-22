@@ -20,6 +20,7 @@
 #include <linux/delay.h>
 #include <linux/clk.h>
 #include <linux/io.h>
+#include <linux/regulator/consumer.h>
 #include <mach/gpio.h>
 #include <mach/board.h>
 #include <mach/camera.h>
@@ -107,10 +108,12 @@ static struct clk *camio_csi_vfe_clk;
 static struct clk *camio_jpeg_clk;
 static struct clk *camio_jpeg_pclk;
 static struct clk *camio_vpe_clk;
+static struct regulator *fs_vpe;
 static struct msm_camera_io_ext camio_ext;
 static struct msm_camera_io_clk camio_clk;
 static struct resource *camifpadio, *csiio;
 void __iomem *camifpadbase, *csibase;
+static uint32_t vpe_clk_rate;
 static uint32_t jpeg_clk_rate;
 
 void msm_io_w(u32 data, void __iomem *addr)
@@ -262,7 +265,8 @@ int msm_camio_clk_enable(enum msm_camio_clk_type clktype)
 #ifdef CONFIG_MSM_VPE_STANDALONE
 		msm_camio_clk_rate_set_2(clk, 153600000);
 #else
-		msm_camio_clk_set_min_rate(clk, 150000000);
+		vpe_clk_rate = clk_round_rate(clk, 150000000);
+		clk_set_rate(clk, vpe_clk_rate);
 #endif /* CONFIG_MSM_VPE_STANDALONE */
 		break;
 	default:
@@ -356,11 +360,6 @@ void msm_camio_clk_rate_set_2(struct clk *clk, int rate)
 	clk_set_rate(clk, rate);
 }
 
-void msm_camio_clk_set_min_rate(struct clk *clk, int rate)
-{
-	clk_set_rate(clk, rate);
-}
-
 #if defined(CONFIG_SEMC_CAMERA_MODULE) || defined(CONFIG_SEMC_SUB_CAMERA_MODULE)
 void msm_camio_cam_mclk_enable(int rate)
 {
@@ -401,11 +400,27 @@ int msm_camio_jpeg_clk_enable(void)
 int msm_camio_vpe_clk_disable(void)
 {
 	msm_camio_clk_disable(CAMIO_VPE_CLK);
+
+	if (fs_vpe) {
+		regulator_disable(fs_vpe);
+		regulator_put(fs_vpe);
+	}
+
 	return 0;
 }
 
 int msm_camio_vpe_clk_enable(void)
 {
+	fs_vpe = regulator_get(NULL, "fs_vpe");
+	if (IS_ERR(fs_vpe)) {
+		pr_err("%s: Regulator FS_VPE get failed %ld\n", __func__,
+			PTR_ERR(fs_vpe));
+		fs_vpe = NULL;
+	} else if (regulator_enable(fs_vpe)) {
+		pr_err("%s: Regulator FS_VPE enable failed\n", __func__);
+		regulator_put(fs_vpe);
+	}
+
 	msm_camio_clk_enable(CAMIO_VPE_CLK);
 	return 0;
 }
