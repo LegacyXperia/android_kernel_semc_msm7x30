@@ -113,7 +113,9 @@ static struct msm_camera_io_ext camio_ext;
 static struct msm_camera_io_clk camio_clk;
 static struct resource *camifpadio, *csiio;
 void __iomem *camifpadbase, *csibase;
+#ifndef CONFIG_MSM_VPE_STANDALONE
 static uint32_t vpe_clk_rate;
+#endif /* CONFIG_MSM_VPE_STANDALONE */
 static uint32_t jpeg_clk_rate;
 
 void msm_io_w(u32 data, void __iomem *addr)
