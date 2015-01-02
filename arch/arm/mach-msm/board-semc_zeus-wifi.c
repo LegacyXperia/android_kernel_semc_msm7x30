@@ -22,25 +22,34 @@
 #include "wifi-zeus.h"
 
 
-#define PREALLOC_WLAN_NUMBER_OF_SECTIONS	4
-#define PREALLOC_WLAN_NUMBER_OF_BUFFERS		160
-#define PREALLOC_WLAN_SECTION_HEADER		24
+#define WLAN_STATIC_SCAN_BUF0		5
+#define WLAN_STATIC_SCAN_BUF1		6
+#define PREALLOC_WLAN_SEC_NUM		4
+#define PREALLOC_WLAN_BUF_NUM		160
+#define PREALLOC_WLAN_SECTION_HEADER	24
 
-#define WLAN_SECTION_SIZE_0	(PREALLOC_WLAN_NUMBER_OF_BUFFERS * 128)
-#define WLAN_SECTION_SIZE_1	(PREALLOC_WLAN_NUMBER_OF_BUFFERS * 128)
-#define WLAN_SECTION_SIZE_2	(PREALLOC_WLAN_NUMBER_OF_BUFFERS * 512)
-#define WLAN_SECTION_SIZE_3	(PREALLOC_WLAN_NUMBER_OF_BUFFERS * 1024)
+#define WLAN_SECTION_SIZE_0	(PREALLOC_WLAN_BUF_NUM * 128)
+#define WLAN_SECTION_SIZE_1	(PREALLOC_WLAN_BUF_NUM * 128)
+#define WLAN_SECTION_SIZE_2	(PREALLOC_WLAN_BUF_NUM * 512)
+#define WLAN_SECTION_SIZE_3	(PREALLOC_WLAN_BUF_NUM * 1024)
 
-#define WLAN_SKB_BUF_NUM	16
+#define DHD_SKB_HDRSIZE		336
+#define DHD_SKB_1PAGE_BUFSIZE	((PAGE_SIZE * 1) - DHD_SKB_HDRSIZE)
+#define DHD_SKB_2PAGE_BUFSIZE	((PAGE_SIZE * 2) - DHD_SKB_HDRSIZE)
+#define DHD_SKB_4PAGE_BUFSIZE	((PAGE_SIZE * 4) - DHD_SKB_HDRSIZE)
+
+#define WLAN_SKB_BUF_NUM	17
 
 static struct sk_buff *wlan_static_skb[WLAN_SKB_BUF_NUM];
+static void *wlan_static_scan_buf0;
+static void *wlan_static_scan_buf1;
 
-typedef struct wifi_mem_prealloc_struct {
+struct wlan_mem_prealloc {
 	void *mem_ptr;
 	unsigned long size;
-} wifi_mem_prealloc_t;
+};
 
-static wifi_mem_prealloc_t wifi_mem_array[PREALLOC_WLAN_NUMBER_OF_SECTIONS] = {
+static struct wlan_mem_prealloc wlan_mem_array[PREALLOC_WLAN_SEC_NUM] = {
 	{ NULL, (WLAN_SECTION_SIZE_0 + PREALLOC_WLAN_SECTION_HEADER) },
 	{ NULL, (WLAN_SECTION_SIZE_1 + PREALLOC_WLAN_SECTION_HEADER) },
 	{ NULL, (WLAN_SECTION_SIZE_2 + PREALLOC_WLAN_SECTION_HEADER) },
@@ -59,13 +68,19 @@ static struct msm_gpio wifi_gpios[] = {
 
 static void *zeus_wifi_mem_prealloc(int section, unsigned long size)
 {
-	if (section == PREALLOC_WLAN_NUMBER_OF_SECTIONS)
+	if (section == PREALLOC_WLAN_SEC_NUM)
 		return wlan_static_skb;
-	if ((section < 0) || (section > PREALLOC_WLAN_NUMBER_OF_SECTIONS))
+	if (section == WLAN_STATIC_SCAN_BUF0)
+		return wlan_static_scan_buf0;
+	if (section == WLAN_STATIC_SCAN_BUF1)
+		return wlan_static_scan_buf1;
+	if ((section < 0) || (section > PREALLOC_WLAN_SEC_NUM))
 		return NULL;
-	if (wifi_mem_array[section].size < size)
+
+	if (wlan_mem_array[section].size < size)
 		return NULL;
-	return wifi_mem_array[section].mem_ptr;
+
+	return wlan_mem_array[section].mem_ptr;
 }
 
 static int zeus_wifi_power(int val)
@@ -127,20 +142,51 @@ static struct platform_device zeus_wifi_device = {
 int __init zeus_init_wifi_mem(void)
 {
 	int i;
+	int j;
 
-	for (i = 0; (i < WLAN_SKB_BUF_NUM); i++) {
-		if (i < (WLAN_SKB_BUF_NUM / 2))
-			wlan_static_skb[i] = dev_alloc_skb(4096);
-		else
-			wlan_static_skb[i] = dev_alloc_skb(8192);
+	for (i = 0; i < 8; i++) {
+		wlan_static_skb[i] = dev_alloc_skb(DHD_SKB_1PAGE_BUFSIZE);
+		if (!wlan_static_skb[i])
+			goto err_skb_alloc;
 	}
-	for (i = 0; (i < PREALLOC_WLAN_NUMBER_OF_SECTIONS); i++) {
-		wifi_mem_array[i].mem_ptr = kmalloc(wifi_mem_array[i].size,
-			GFP_KERNEL);
-		if (wifi_mem_array[i].mem_ptr == NULL)
-			return -ENOMEM;
+	for (; i < 16; i++) {
+		wlan_static_skb[i] = dev_alloc_skb(DHD_SKB_2PAGE_BUFSIZE);
+		if (!wlan_static_skb[i])
+			goto err_skb_alloc;
 	}
+	wlan_static_skb[i] = dev_alloc_skb(DHD_SKB_4PAGE_BUFSIZE);
+	if (!wlan_static_skb[i])
+		goto err_skb_alloc;
+
+	for (i = 0; i < PREALLOC_WLAN_SEC_NUM; i++) {
+		wlan_mem_array[i].mem_ptr =
+			kmalloc(wlan_mem_array[i].size, GFP_KERNEL);
+
+		if (!wlan_mem_array[i].mem_ptr)
+			goto err_mem_alloc;
+	}
+	wlan_static_scan_buf0 = kmalloc(65536, GFP_KERNEL);
+	if (!wlan_static_scan_buf0)
+		goto err_mem_alloc;
+	wlan_static_scan_buf1 = kmalloc(65536, GFP_KERNEL);
+	if (!wlan_static_scan_buf1)
+		goto err_mem_alloc;
+
 	return 0;
+
+err_mem_alloc:
+	pr_err("Failed to mem_alloc for wifi\n");
+	for (j = 0; j < i; j++)
+		kfree(wlan_mem_array[j].mem_ptr);
+
+	i = WLAN_SKB_BUF_NUM;
+
+err_skb_alloc:
+	pr_err("Failed to skb_alloc for wifi\n");
+	for (j = 0; j < i; j++)
+		dev_kfree_skb(wlan_static_skb[j]);
+
+	return -ENOMEM;
 }
 
 static int __init zeus_init_wifi_gpio(void)
