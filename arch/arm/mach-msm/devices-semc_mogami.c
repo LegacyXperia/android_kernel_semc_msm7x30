@@ -1032,49 +1032,6 @@ static struct platform_device msm_ebi2_lcd_device = {
 	.resource       = msm_ebi2_lcd_resources,
 };
 
-/* TSIF begin */
-#if defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE)
-
-#define MSM_TSIF_PHYS        (0xa3400000)
-#define MSM_TSIF_SIZE        (0x200)
-
-static struct resource tsif_resources[] = {
-	[0] = {
-		.flags = IORESOURCE_IRQ,
-		.start = INT_TSIF,
-		.end   = INT_TSIF,
-	},
-	[1] = {
-		.flags = IORESOURCE_MEM,
-		.start = MSM_TSIF_PHYS,
-		.end   = MSM_TSIF_PHYS + MSM_TSIF_SIZE - 1,
-	},
-	[2] = {
-		.flags = IORESOURCE_DMA,
-		.start = DMOV_TSIF_CHAN,
-		.end   = DMOV_TSIF_CRCI,
-	},
-};
-
-static void tsif_release(struct device *dev)
-{
-	dev_info(dev, "release\n");
-}
-
-struct platform_device msm_device_tsif = {
-	.name          = "msm_tsif",
-	.id            = 0,
-	.num_resources = ARRAY_SIZE(tsif_resources),
-	.resource      = tsif_resources,
-	.dev = {
-		.release       = tsif_release,
-	},
-};
-#endif /* defined(CONFIG_TSIF) || defined(CONFIG_TSIF_MODULE) */
-/* TSIF end   */
-
-
-
 #ifdef CONFIG_MSM_ROTATOR
 static struct resource resources_msm_rotator[] = {
 	{
