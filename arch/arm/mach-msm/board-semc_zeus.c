@@ -3403,6 +3403,7 @@ struct platform_device semc_reset_keys_device = {
 #endif
 
 unsigned bt_mac_addr[IFHWADDRLEN];
+unsigned wifi_mac_addr[IFHWADDRLEN];
 
 #ifdef CONFIG_PROC_FS
 static void *frag_start(struct seq_file *m, loff_t *pos)
@@ -3464,6 +3465,14 @@ static int __init bt_addr_proc_init(void)
 #endif
 	return 0;
 }
+
+int zeus_get_wlanmac(uint8_t *wlanmac)
+{
+	int i = IFHWADDRLEN;
+	while (i-- > 0)
+		wlanmac[i] = wifi_mac_addr[i];
+	return 0;
+};
 
 static void __init msm7x30_init(void)
 {
@@ -3821,7 +3830,16 @@ static int __init board_bt_addr_setup(char *btaddr)
 	return 1;
 };
 
+static int __init board_wifi_addr_setup(char *wifiaddr)
+{
+	sscanf(wifiaddr, "%02X:%02X:%02X:%02X:%02X:%02X",
+		&wifi_mac_addr[0], &wifi_mac_addr[1], &wifi_mac_addr[2],
+		&wifi_mac_addr[3], &wifi_mac_addr[4], &wifi_mac_addr[5]);
+	return 1;
+};
+
 __setup("bt0.ieee_addr=", board_bt_addr_setup);
+__setup("wifi0.eth_addr=", board_wifi_addr_setup);
 
 MACHINE_START(SEMC_ZEUS, "zeus")
 	.atag_offset = 0x100,

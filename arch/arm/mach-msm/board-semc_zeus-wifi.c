@@ -112,6 +112,22 @@ static int zeus_wifi_set_carddetect(int val)
 	return 0;
 }
 
+static int zeus_wifi_get_mac_addr(unsigned char *buf)
+{
+	int ret;
+	uint8_t mac_address[IFHWADDRLEN];
+
+	ret = zeus_get_wlanmac(mac_address);
+	if (ret) {
+		pr_err("Failed to get cmdline wlan mac ret=%d\n", ret);
+		return ret;
+	}
+
+	memcpy(buf, mac_address, IFHWADDRLEN);
+
+	return 0;
+}
+
 static struct resource zeus_wifi_resources[] = {
 	[0] = {
 		.name		= "bcmdhd_wlan_irq",
@@ -127,6 +143,7 @@ static struct wifi_platform_data zeus_wifi_control = {
 	.set_reset	= zeus_wifi_reset,
 	.set_carddetect	= zeus_wifi_set_carddetect,
 	.mem_prealloc	= zeus_wifi_mem_prealloc,
+	.get_mac_addr	= zeus_wifi_get_mac_addr,
 };
 
 static struct platform_device zeus_wifi_device = {

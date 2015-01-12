@@ -16,5 +16,6 @@
 extern void (*wifi_status_cb)(int card_present, void *dev_id);
 extern void *wifi_status_cb_devid;
 extern int zeus_wifi_cd; /* WIFI virtual 'card detect' status */
+extern int zeus_get_wlanmac(uint8_t *wlanmac);
 
 #endif
