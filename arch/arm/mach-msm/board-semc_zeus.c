@@ -140,6 +140,10 @@
 #include <linux/i2c/synaptics_touchpad.h>
 #endif
 
+#include <linux/if.h>
+#include <linux/proc_fs.h>
+#include <linux/seq_file.h>
+
 #include "wifi-zeus.h"
 
 #ifdef CONFIG_SENSORS_AKM8975
@@ -3398,6 +3402,69 @@ struct platform_device semc_reset_keys_device = {
 };
 #endif
 
+unsigned bt_mac_addr[IFHWADDRLEN];
+
+#ifdef CONFIG_PROC_FS
+static void *frag_start(struct seq_file *m, loff_t *pos)
+{
+	pg_data_t *pgdat;
+	loff_t node = *pos;
+	for (pgdat = first_online_pgdat();
+	     pgdat && node;
+	     pgdat = next_online_pgdat(pgdat))
+		--node;
+
+	return pgdat;
+}
+
+static void *frag_next(struct seq_file *m, void *arg, loff_t *pos)
+{
+	pg_data_t *pgdat = (pg_data_t *)arg;
+
+	(*pos)++;
+	return next_online_pgdat(pgdat);
+}
+
+static void frag_stop(struct seq_file *m, void *arg)
+{
+}
+
+static int bt_addr_file_show(struct seq_file *m, void *arg)
+{
+	seq_printf(m, "%02X:%02X:%02X:%02X:%02X:%02X\n",
+		bt_mac_addr[0], bt_mac_addr[1], bt_mac_addr[2],
+		bt_mac_addr[3], bt_mac_addr[4], bt_mac_addr[5]);
+	return 0;
+};
+
+static const struct seq_operations bt_addr_file_op = {
+	.start		= frag_start,
+	.next		= frag_next,
+	.stop		= frag_stop,
+	.show		= bt_addr_file_show,
+};
+
+static int bt_addr_file_open(struct inode *inode, struct file *file)
+{
+	return seq_open(file, &bt_addr_file_op);
+};
+
+static const struct file_operations bt_addr_file_ops = {
+	.open		= bt_addr_file_open,
+	.read		= seq_read,
+	.llseek		= seq_lseek,
+	.release	= seq_release,
+};
+#endif
+
+static int __init bt_addr_proc_init(void)
+{
+#ifdef CONFIG_PROC_FS
+	proc_create("bt_mac_addr", S_IRUGO, NULL, &bt_addr_file_ops);
+#endif
+	return 0;
+}
+
 static void __init msm7x30_init(void)
 {
 	unsigned smem_size;
@@ -3444,6 +3511,7 @@ static void __init msm7x30_init(void)
 #ifdef CONFIG_INPUT_KEYRESET
 	platform_device_register(&semc_reset_keys_device);
 #endif
+	bt_addr_proc_init();
 #ifdef CONFIG_MSM_BT_POWER
 	bluetooth_power_init();
 #endif
@@ -3744,6 +3812,16 @@ static void __init msm7x30_fixup(struct tag *tags, char **cmdline,
 	}
 
 }
+
+static int __init board_bt_addr_setup(char *btaddr)
+{
+	sscanf(btaddr, "%02X:%02X:%02X:%02X:%02X:%02X",
+		&bt_mac_addr[0], &bt_mac_addr[1], &bt_mac_addr[2],
+		&bt_mac_addr[3], &bt_mac_addr[4], &bt_mac_addr[5]);
+	return 1;
+};
+
+__setup("bt0.ieee_addr=", board_bt_addr_setup);
 
 MACHINE_START(SEMC_ZEUS, "zeus")
 	.atag_offset = 0x100,
