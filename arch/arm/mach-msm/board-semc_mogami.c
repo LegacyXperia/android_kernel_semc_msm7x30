@@ -4172,6 +4172,25 @@ static void __init msm7x30_fixup_sn(char *kernel_cmdline, char *bl_cmdline)
 	strlcat(kernel_cmdline, serialno, COMMAND_LINE_SIZE);
 }
 
+#define CMDLINE_BOOTMODE "startup="
+static void __init msm7x30_fixup_bm(char *kernel_cmdline, char *bl_cmdline)
+{
+	char bootmode[11];
+	/* Find bootmode start position. */
+	char *bootmode_start = strstr(bl_cmdline,
+		CMDLINE_BOOTMODE) + sizeof(CMDLINE_BOOTMODE) - 1;
+
+	/* Copy bootmode to it's own buffer. */
+	strncpy(bootmode, bootmode_start, ARRAY_SIZE(bootmode));
+	bootmode[10] = '\0';
+
+	/* Enter the bootmode in correct format. */
+	if (!strcmp(bootmode, "0x00000020")) {
+		strlcat(kernel_cmdline,
+			" androidboot.mode=charger", COMMAND_LINE_SIZE);
+	}
+}
+
 static void __init msm7x30_fixup(struct tag *tags, char **cmdline,
 				 struct meminfo *mi)
 {
@@ -4186,6 +4205,7 @@ static void __init msm7x30_fixup(struct tag *tags, char **cmdline,
 	for (; tags->hdr.size; tags = tag_next(tags)) {
 		if (tags->hdr.tag == ATAG_CMDLINE) {
 			msm7x30_fixup_sn(*cmdline, tags->u.cmdline.cmdline);
+			msm7x30_fixup_bm(*cmdline, tags->u.cmdline.cmdline);
 			break;
 		}
 	}
