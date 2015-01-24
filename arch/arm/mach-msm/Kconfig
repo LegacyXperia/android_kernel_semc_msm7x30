@@ -2476,16 +2476,6 @@ config MSM_MULTIMEDIA_USE_ION
 	  instead of pmem. Selecting this may also involve userspace
 	  dependencies as well.
 
-config MSM_ION_MM_USE_CMA
-	bool "Use CMA for ION MM heap"
-	depends on MSM_MULTIMEDIA_USE_ION && (BOARD_SEMC_MOGAMI || BOARD_SEMC_ZEUS)
-	select CMA
-	help
-	  Enable switching from carveout heap to DMA heap for ION heap
-	  targeting MM features. The memory area will be dynamically allocated
-	  through CMA framework and can be re-allocated when it's not being
-	  used by any client.
-
 config MSM_OCMEM
 	bool "MSM On-Chip memory driver (OCMEM)"
 	help
