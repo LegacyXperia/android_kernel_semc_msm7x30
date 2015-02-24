@@ -2850,14 +2850,9 @@ static int msm_hsusb_ldo_set_voltage(int mV)
 }
 #endif
 
-#ifndef CONFIG_USB_EHCI_MSM_72K
-static int msm_hsusb_pmic_notif_init(void (*callback)(int online), int init);
-#endif
 static struct msm_otg_platform_data msm_otg_pdata = {
-#ifndef CONFIG_USB_EHCI_MSM_72K
-	.pmic_vbus_notif_init         = msm_hsusb_pmic_notif_init,
-#else
-	.vbus_power = msm_hsusb_vbus_power,
+#ifdef CONFIG_USB_EHCI_MSM_72K
+	.vbus_power		 = msm_hsusb_vbus_power,
 #endif
 	.pemp_level		 = PRE_EMPHASIS_WITH_20_PERCENT,
 	.cdr_autoreset		 = CDR_AUTO_RESET_DISABLE,
@@ -2883,50 +2878,6 @@ static struct msm_hsusb_gadget_platform_data msm_gadget_pdata = {
 	.is_phy_status_timer_on = 1,
 	.prop_chg = 1,
 };
-#endif
-#ifndef CONFIG_USB_EHCI_MSM_72K
-typedef void (*notify_vbus_state) (int);
-notify_vbus_state notify_vbus_state_func_ptr;
-int vbus_on_irq;
-static irqreturn_t pmic_vbus_on_irq(int irq, void *data)
-{
-	pr_info("%s: vbus notification from pmic\n", __func__);
-
-	(*notify_vbus_state_func_ptr) (1);
-
-	return IRQ_HANDLED;
-}
-static int msm_hsusb_pmic_notif_init(void (*callback)(int online), int init)
-{
-	int ret;
-
-	if (init) {
-		if (!callback)
-			return -ENODEV;
-
-		notify_vbus_state_func_ptr = callback;
-		vbus_on_irq = platform_get_irq_byname(&msm_device_otg,
-			"vbus_on");
-		if (vbus_on_irq <= 0) {
-			pr_err("%s: unable to get vbus on irq\n", __func__);
-			return -ENODEV;
-		}
-
-		ret = request_any_context_irq(vbus_on_irq, pmic_vbus_on_irq,
-			IRQF_TRIGGER_RISING, "msm_otg_vbus_on", NULL);
-		if (ret < 0) {
-			pr_info("%s: request_irq for vbus_on"
-				"interrupt failed\n", __func__);
-			return ret;
-		}
-		msm_otg_pdata.pmic_vbus_irq = vbus_on_irq;
-		return 0;
-	} else {
-		free_irq(vbus_on_irq, 0);
-		notify_vbus_state_func_ptr = NULL;
-		return 0;
-	}
-}
 #endif
 
 static struct msm_serial_hs_platform_data msm_uart_dm1_pdata = {
@@ -3340,8 +3291,8 @@ static void __init msm_device_i2c_init(void)
 
 static struct msm_i2c_platform_data msm_i2c_2_pdata = {
 	.clk_freq = 100000,
-	.rmutex  = 0, // = 1,
-	//.rsl_id = "D:I2C02000022",
+	.rmutex  = 1,
+	.rsl_id = "D:I2C02000022",
 	.msm_i2c_config_gpio = msm_i2c_gpio_config,
 };
 
