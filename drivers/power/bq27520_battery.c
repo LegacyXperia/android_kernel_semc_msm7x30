@@ -1970,7 +1970,8 @@ static int get_supplier_data(struct device *dev, void *data)
 		container_of(psy, struct bq27520_data, bat_ps);
 
 	for (i = 0; i < pst->num_supplicants; i++) {
-		if (strcmp(pst->supplied_to[i], psy->name))
+		if (strncmp(pst->supplied_to[i], psy->name,
+			sizeof(*(pst->supplied_to[i]))))
 			continue;
 
 		if (!pst->get_property(pst, POWER_SUPPLY_PROP_TEMP, &ret)) {
