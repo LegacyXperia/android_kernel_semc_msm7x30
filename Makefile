@@ -245,8 +245,8 @@ CONFIG_SHELL := $(shell if [ -x "$$BASH" ]; then echo $$BASH; \
 
 HOSTCC       = gcc
 HOSTCXX      = g++
-HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer -fgcse-las -fipa-pta
-HOSTCXXFLAGS = -O3  -fgcse-las -fipa-pta
+HOSTCFLAGS   = -Wall -Wmissing-prototypes -Wstrict-prototypes -O3 -fomit-frame-pointer -fgcse-las
+HOSTCXXFLAGS = -O3  -fgcse-las
 
 # Decide whether to build built-in, modular, or both.
 # Normally, just do built-in.
@@ -354,7 +354,7 @@ MODFLAGS        = -DMODULE \
                   -mtune=cortex-a15 \
                   -O3 \
                   -fgcse-las \
-                  -fipa-pta
+                  -fpredictive-commoning
 
 CFLAGS_MODULE   = $(MODFLAGS)
 AFLAGS_MODULE   = $(MODFLAGS)
@@ -364,8 +364,7 @@ CFLAGS_KERNEL   = -march=armv7-a \
                   -mtune=cortex-a15 \
                   -O2 \
                   -fgcse-las \
-                  -fipa-pta \
-                  -fpredictive-commoning 
+                  -fpredictive-commoning
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
