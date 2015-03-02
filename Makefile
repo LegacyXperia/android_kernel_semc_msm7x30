@@ -365,6 +365,9 @@ CFLAGS_KERNEL   = -march=armv7-a \
                   -O2 \
                   -fgcse-las \
                   -fpredictive-commoning
+ifeq ($(ENABLE_GRAPHITE),true)
+CFLAGS_KERNEL	+= -fgraphite -floop-parallelize-all -ftree-loop-linear -floop-interchange -floop-strip-mine -floop-block
+endif
 AFLAGS_KERNEL	=
 CFLAGS_GCOV	= -fprofile-arcs -ftest-coverage
 
