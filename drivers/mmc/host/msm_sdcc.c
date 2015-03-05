@@ -2267,10 +2267,12 @@ msmsdcc_request(struct mmc_host *mmc, struct mmc_request *mrq)
 	if (mrq->data && (mrq->data->flags & MMC_DATA_WRITE)) {
 		if (msmsdcc_is_wait_for_auto_prog_done(host, mrq)) {
 			host->curr.wait_for_auto_prog_done = true;
+#ifndef CONFIG_BOARD_SEMC_MOGAMI
 		} else {
 			if ((mrq->cmd->opcode == SD_IO_RW_EXTENDED) ||
 			    (mrq->cmd->opcode == 54))
 				host->dummy_52_needed = 1;
+#endif
 		}
 
 		if ((mrq->cmd->opcode == MMC_WRITE_BLOCK) ||
