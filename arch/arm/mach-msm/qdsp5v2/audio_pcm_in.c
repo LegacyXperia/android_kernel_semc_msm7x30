@@ -373,10 +373,10 @@ static int audpcm_in_enc_config(struct audio_in *audio, int enable)
 	memset(&cmd, 0, sizeof(cmd));
 	if (audio->build_id[17] == '1') {
 		cmd.cmd_id = AUDPREPROC_AUDREC_CMD_ENC_CFG_2;
-		MM_ERR("sending AUDPREPROC_AUDREC_CMD_ENC_CFG_2 command");
+		MM_DBG("sending AUDPREPROC_AUDREC_CMD_ENC_CFG_2 command");
 	} else {
 		cmd.cmd_id = AUDPREPROC_AUDREC_CMD_ENC_CFG;
-		MM_ERR("sending AUDPREPROC_AUDREC_CMD_ENC_CFG command");
+		MM_DBG("sending AUDPREPROC_AUDREC_CMD_ENC_CFG command");
 	}
 	cmd.stream_id = audio->enc_id;
 
