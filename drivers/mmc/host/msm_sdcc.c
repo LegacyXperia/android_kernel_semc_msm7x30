@@ -4,7 +4,6 @@
  *  Copyright (C) 2007 Google Inc,
  *  Copyright (C) 2003 Deep Blue Solutions, Ltd, All Rights Reserved.
  *  Copyright (c) 2009-2012, The Linux Foundation. All rights reserved.
- *  Copyright (C) 2010 Sony Ericsson Mobile Communications AB.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 as
@@ -6006,7 +6005,6 @@ msmsdcc_probe(struct platform_device *pdev)
 		if (ret) {
 			pr_err("Unable to get sdio wakeup IRQ %d (%d)\n",
 				plat->sdiowakeup_irq, ret);
-			wake_lock_destroy(&host->sdio_wlock);
 			goto pio_irq_free;
 		} else {
 			spin_lock_irqsave(&host->lock, flags);
@@ -6053,18 +6051,6 @@ msmsdcc_probe(struct platform_device *pdev)
 			pr_err("Unable to get slot IRQ %d (%d)\n",
 			       plat->status_irq, ret);
 			goto sdiowakeup_irq_free;
-		}
-		/*
-		 * Due to that sdiowakeup_irq is not available for non-SDIO
-		 * card the MMC driver doesn't receive interrupt when SD
-		 * card is inserted and the phone is in deep sleep. Hence the
-		 * wake-up interrupt enables explicitly using enable_irq_wake.
-		*/
-		device_init_wakeup(&pdev->dev, 1);
-		ret = enable_irq_wake(plat->status_irq);
-		if (ret) {
-			pr_err("enable_irq_wake failed, slot IRQ %d (%d)\n",
-				plat->status_irq, ret);
 		}
 	} else if (plat->register_status_notify) {
 		plat->register_status_notify(msmsdcc_status_notify_cb, host);
