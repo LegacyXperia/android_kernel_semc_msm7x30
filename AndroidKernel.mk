@@ -2,7 +2,12 @@
 PERL		= perl
 
 ifeq ($(TARGET_PREBUILT_KERNEL),)
-INSTALLED_KERNEL_TARGET := $(PRODUCT_OUT)/kernel
+
+# If graphite is enabled, export it so the kernel knows about it, otherwise it could stay to android environment only
+ifeq ($(ENABLE_GRAPHITE),true)
+export ENABLE_GRAPHITE := true
+endif
+
 KERNEL_OUT := $(TARGET_OUT_INTERMEDIATES)/KERNEL_OBJ
 KERNEL_CONFIG := $(KERNEL_OUT)/.config
 TARGET_PREBUILT_INT_KERNEL := $(KERNEL_OUT)/arch/arm/boot/zImage
