@@ -20,6 +20,8 @@
 #include <linux/slab.h>
 #include <linux/skbuff.h>
 #include <linux/ti_wilink_st.h>
+#include <mach/msm_serial_hs.h>
+
 #define WILINK_UART_DEV_NAME "/dev/ttyHS0"
 
 static int bt_on;
@@ -86,12 +88,20 @@ static int wilink_disable(struct kim_data_s *data)
 
 static int wilink_awake(struct kim_data_s *data)
 {
+	struct uart_state *state = data->core_data->tty->driver_data;
+	struct uart_port *uport = state->uart_port;
+
+	msm_hs_request_clock_on(uport);
 	pr_info("%s\n", __func__);
 	return 0;
 }
 
 static int wilink_asleep(struct kim_data_s *data)
 {
+	struct uart_state *state = data->core_data->tty->driver_data;
+	struct uart_port *uport = state->uart_port;
+
+	msm_hs_request_clock_off(uport);
 	pr_info("%s\n", __func__);
 	return 0;
 }
