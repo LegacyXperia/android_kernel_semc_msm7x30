@@ -17,60 +17,60 @@
 /* mango GPIO slider - end */
 
 static const unsigned int pm8xxx_keymap[] = {
-	KEY(0, 1, KEY_CAMERA_FOCUS),        /* camera AF */
-	KEY(0, 2, KEY_COMPOSE),         /* Symbol */
-	KEY(0, 3, KEY_SPACE),
-	KEY(0, 4, KEY_ENTER),
-	KEY(0, 5, KEY_DOT),
-	KEY(0, 6, KEY_UP),
+	KEY(0, 1, KEY_CAMERA_FOCUS),	/* FOCUS */
+	KEY(0, 2, KEY_COMPOSE),		/* PICTSYMBOLS */
+	KEY(0, 3, KEY_SPACE),		/* SPACE */
+	KEY(0, 4, KEY_ENTER),		/* ENTER */
+	KEY(0, 5, KEY_DOT),		/* PERIOD */
+	KEY(0, 6, KEY_UP),		/* DPAD_UP */
 
-	KEY(1, 0, KEY_HOME),
-	KEY(1, 1, KEY_CAMERA),
-	KEY(1, 3, KEY_A),
-	KEY(1, 4, KEY_D),
-	KEY(1, 5, KEY_APOSTROPHE),         /* camera AF */
-	KEY(1, 6, KEY_DOWN),
+	KEY(1, 0, KEY_HOME),		/* HOME */
+	KEY(1, 1, KEY_CAMERA),		/* CAMERA */
+	KEY(1, 3, KEY_A),		/* A */
+	KEY(1, 4, KEY_D),		/* D */
+	KEY(1, 5, KEY_APOSTROPHE),	/* APOSTROPHE */
+	KEY(1, 6, KEY_DOWN),		/* DPAD_DOWN */
 
-	KEY(2, 1, KEY_VOLUMEDOWN),
-	KEY(2, 3, KEY_B),
-	KEY(2, 5, KEY_RIGHTBRACE),        /* ?/! */
-	KEY(2, 7, KEY_RIGHT),
+	KEY(2, 1, KEY_VOLUMEDOWN),	/* VOLUME_DOWN */
+	KEY(2, 3, KEY_B),		/* B */
+	KEY(2, 5, KEY_RIGHTBRACE),	/* GRAVE */
+	KEY(2, 7, KEY_RIGHT),		/* DPAD_RIGHT */
 
-	KEY(3, 0, KEY_LEFTSHIFT),
-	KEY(3, 1, KEY_VOLUMEUP),
-	KEY(3, 2, KEY_F),
-	KEY(3, 3, KEY_COMMA),
-	KEY(3, 4, KEY_Z),
-	KEY(3, 5, KEY_E),
-	KEY(3, 7, KEY_LEFT),
+	KEY(3, 0, KEY_LEFTSHIFT),	/* SHIFT_LEFT */
+	KEY(3, 1, KEY_VOLUMEUP),	/* VOLUME_UP */
+	KEY(3, 2, KEY_F),		/* F */
+	KEY(3, 3, KEY_COMMA),		/* COMMA */
+	KEY(3, 4, KEY_Z),		/* Z */
+	KEY(3, 5, KEY_E),		/* E */
+	KEY(3, 7, KEY_LEFT),		/* DPAD_LEFT */
 
-	KEY(4, 1, KEY_Q),
-	KEY(4, 3, KEY_R),
-	KEY(4, 4, KEY_C),
-	KEY(4, 5, KEY_T),
-	KEY(4, 6, KEY_LEFTALT),
-	KEY(4, 7, KEY_V),
+	KEY(4, 1, KEY_Q),		/* Q */
+	KEY(4, 3, KEY_R),		/* R */
+	KEY(4, 4, KEY_C),		/* C */
+	KEY(4, 5, KEY_T),		/* T */
+	KEY(4, 6, KEY_LEFTALT),		/* ALT_LEFT */
+	KEY(4, 7, KEY_V),		/* V */
 
-	KEY(5, 1, KEY_G),
-	KEY(5, 2, KEY_LEFTBRACE),        /* @/& */
-	KEY(5, 4, KEY_Y),
-	KEY(5, 5, KEY_H),
-	KEY(5, 6, KEY_LANGUAGE),        /* language */
-	KEY(5, 7, KEY_X),
+	KEY(5, 1, KEY_G),		/* G */
+	KEY(5, 2, KEY_LEFTBRACE),	/* AT */
+	KEY(5, 4, KEY_Y),		/* Y */
+	KEY(5, 5, KEY_H),		/* H */
+	KEY(5, 6, KEY_LANGUAGE),	/* LANGUAGE_SWITCH */
+	KEY(5, 7, KEY_X),		/* X */
 
-	KEY(6, 1, KEY_U),
-	KEY(6, 2, KEY_N),
-	KEY(6, 3, KEY_J),
-	KEY(6, 5, KEY_I),
-	KEY(6, 6, KEY_K),
-	KEY(6, 7, KEY_M),
+	KEY(6, 1, KEY_U),		/* U */
+	KEY(6, 2, KEY_N),		/* N */
+	KEY(6, 3, KEY_J),		/* J */
+	KEY(6, 5, KEY_I),		/* I */
+	KEY(6, 6, KEY_K),		/* K */
+	KEY(6, 7, KEY_M),		/* M */
 
-	KEY(7, 0, KEY_W),
-	KEY(7, 1, KEY_S),
-	KEY(7, 2, KEY_O),
-	KEY(7, 4, KEY_L),
-	KEY(7, 6, KEY_BACKSPACE),
-	KEY(7, 7, KEY_P),
+	KEY(7, 0, KEY_W),		/* W */
+	KEY(7, 1, KEY_S),		/* S */
+	KEY(7, 2, KEY_O),		/* O */
+	KEY(7, 4, KEY_L),		/* L */
+	KEY(7, 6, KEY_BACKSPACE),	/* DEL */
+	KEY(7, 7, KEY_P),		/* P */
 };
 
 static struct matrix_keymap_data pm8xxx_keymap_data = {
