@@ -34,7 +34,7 @@
 #include <linux/module.h>
 
 #define AKM8975_DEBUG		1
-#define AKM8975_DEBUG_MSG	1
+#define AKM8975_DEBUG_MSG	0
 #define AKM8975_DEBUG_FUNC	0
 #define AKM8975_DEBUG_DATA	0
 #define MAX_FAILURE_COUNT	3
