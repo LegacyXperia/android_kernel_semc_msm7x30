@@ -1541,7 +1541,7 @@ static int lm356x_suspend(struct device *dev)
 		goto exit_suspend;
 	}
 
-	dev_info(&data->client->dev,
+	dev_dbg(&data->client->dev,
 		 "%s: Suspending LM356X driver.\n", __func__);
 
 exit_suspend:
@@ -1563,14 +1563,14 @@ static int lm356x_resume(struct device *dev)
 		goto exit_resume;
 	}
 
-	dev_info(dev, "%s: Reinit lm356x chip.\n", __func__);
+	dev_dbg(dev, "%s: Reinit lm356x chip.\n", __func__);
 	result = lm356x_chip_init(data, pdata);
 	if (result) {
 		dev_err(dev, "%s:chip init error\n", __func__);
 		goto exit_resume;
 	}
 
-	dev_info(&data->client->dev,
+	dev_dbg(&data->client->dev,
 		 "%s: Resuming LM356X driver.\n", __func__);
 
 exit_resume:
