@@ -1,4 +1,4 @@
-obj-$(CONFIG_MSM_CAMERA) += msm_camera.o msm_v4l2.o msm_axi_qos.o
+obj-$(CONFIG_MSM_CAMERA) += msm_camera.o msm_axi_qos.o
 obj-$(CONFIG_MSM_CAMERA_FLASH) += flash.o
 obj-$(CONFIG_ARCH_MSM7X30) += msm_vfe31.o msm_io_vfe31.o msm_vpe1.o
 obj-$(CONFIG_SEIX006) += seix006.o seix006_cam_devdrv_table.o
