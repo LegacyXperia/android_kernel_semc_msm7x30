@@ -1564,7 +1564,7 @@ void simple_remote_pf_button_handler(uint32_t key, uint32_t event)
 	/* Ignore this check for adaptor support. We only start a work
 	 * thread if adaptor is supported. Check is done elsewhere */
 	if (loc_dat->simple_remote_btn_det_cb_func == NULL) {
-		dev_err(loc_dat->dev, "%s - Button callback not registered\n",
+		dev_dbg(loc_dat->dev, "%s - Button callback not registered\n",
 			__func__);
 		return;
 	}
