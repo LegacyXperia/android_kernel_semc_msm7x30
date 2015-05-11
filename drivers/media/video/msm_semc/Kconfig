@@ -1,11 +1,10 @@
 comment "Camera Sensor Selection"
 config SEIX006
-	bool "Sensor sexi006"
+	bool "Sensor seix006"
 	depends on MSM_CAMERA
-	default y
 	---help---
-	  This is a camera driver for the sexi006 sensor
-          
+	  This is a camera driver for the seix006 sensor
+
 config OVM7692
 	bool "Sensor ovm7692"
 	depends on MSM_CAMERA
@@ -17,21 +16,16 @@ config MT9V114
 	depends on MSM_CAMERA
 	---help---
 	  AAC/Heptagon VGA fixed focus sensor
-#	Used as front sensor
-#	Uses parallel interface
-#	Previously known as Hydrogen
 
 config SEMC_CAMERA_MODULE
 	bool "SEMC specific camera (Main camera)"
 	depends on MSM_CAMERA
-	default y
 	---help---
 	  SEMC specific camera module
 
 config SEMC_SUB_CAMERA_MODULE
 	bool "SEMC specific camera (Sub camera)"
 	depends on MSM_CAMERA
-	default y
 	---help---
 	  SEMC specific sub camera module
 
@@ -44,21 +38,21 @@ config MSM_CAMERA_FLASH
 
 config MSM_GEMINI
 	tristate "Qualcomm MSM Gemini Jpeg Engine support"
-	depends on MSM_CAMERA && (ARCH_MSM7X30 || ARCH_MSM8X60)
-	default M
+	depends on MSM_CAMERA && ARCH_MSM7X30
+	default y
 	---help---
 	  Enable support for Gemini Jpeg Engine
 
 config MSM_VPE
 	tristate "Qualcomm MSM Video Pre-processing Engine support"
-	depends on MSM_CAMERA && (ARCH_MSM7X30 || ARCH_MSM8X60)
+	depends on MSM_CAMERA && ARCH_MSM7X30
 	default y
 	---help---
 	  Enable support for Video Pre-processing Engine
 
 config MSM_VPE_STANDALONE
 	tristate "Qualcomm MSM Video Pre-processing Engine support"
-	depends on MSM_CAMERA && (ARCH_MSM7X30 || ARCH_MSM8X60)
+	depends on MSM_CAMERA && ARCH_MSM7X30
 	default y
 	---help---
 	  Enable support for Video Pre-processing Engine
