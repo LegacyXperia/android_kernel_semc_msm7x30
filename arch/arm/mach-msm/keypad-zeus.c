@@ -129,10 +129,10 @@ static struct gpio_event_direct_entry gpio_keypad_map[] = {
 	{KEY_B_GPIO, BTN_B},
 	{KEY_C_4_GPIO, BTN_A},
 	{KEY_D_GPIO, BTN_X},
-	{KEY_CU_GPIO, KEY_RIGHT},
-	{KEY_CD_GPIO, KEY_LEFT},
-	{KEY_CL_GPIO, KEY_UP},
-	{KEY_CR_GPIO, KEY_DOWN},
+	{KEY_CU_GPIO, KEY_UP},
+	{KEY_CD_GPIO, KEY_DOWN},
+	{KEY_CL_GPIO, KEY_LEFT},
+	{KEY_CR_GPIO, KEY_RIGHT},
 	{PSN_KEY_GPIO, KEY_MEDIA},
 };
 
