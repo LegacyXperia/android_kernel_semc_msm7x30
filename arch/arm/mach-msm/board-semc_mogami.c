@@ -3696,15 +3696,6 @@ out3:
 
 }
 
-/*
- * Temporary place for hardware initialization until the devices in question
- * gets proper drivers
- */
-static void __init mogami_temp_fixups(void)
-{
-	gpio_set_value(46, 1);	/* SPI_CS0_N - Touch */
-}
-
 static void __init shared_vreg_on(void)
 {
 #ifndef CONFIG_TOUCHSCREEN_CLEARPAD
@@ -3837,7 +3828,6 @@ static void __init msm7x30_init(void)
 	platform_add_devices(msm_footswitch_devices,
 			     msm_num_footswitch_devices);
 	platform_add_devices(devices, ARRAY_SIZE(devices));
-	mogami_temp_fixups();
 #ifdef CONFIG_SEMC_CHARGER_USB_ARCH
 	semc_chg_usb_set_supplicants(semc_chg_usb_supplied_to,
 				  ARRAY_SIZE(semc_chg_usb_supplied_to));
