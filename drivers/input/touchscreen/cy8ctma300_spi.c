@@ -1832,6 +1832,13 @@ static int cy8ctma300_touch_probe(struct spi_device *spi)
 		return -ENODEV;
 	}
 
+	if (pdata && pdata->spi_cs_set) {
+		err = pdata->spi_cs_set(1);
+		if (err > 0)
+			dev_err(&spi->dev, "CY8CTMA300_TOUCH: spi_cs_set "
+						"failed\n");
+	}
+
 	if (pdata && pdata->gpio_init) {
 		err = pdata->gpio_init();
 		if (err > 0)
