@@ -778,7 +778,7 @@ static int synaptics_touchpad_set_power(struct synaptics_touchpad *this)
 	active = this->active;
 	users = this->input ? this->input->users : 0;
 
-	dev_info(&this->i2c->dev, "%s: powered %d, activated %d,"
+	dev_dbg(&this->i2c->dev, "%s: powered %d, activated %d,"
 			" users %d, standby %d\n", __func__,
 			!!(active & SYN_ACTIVE_POWER),
 			!!(active & SYN_ACTIVE_REQ),
