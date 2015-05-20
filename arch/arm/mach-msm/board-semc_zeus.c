@@ -113,8 +113,8 @@
 #ifdef CONFIG_INPUT_BMA150_NG
 #include <linux/bma150_ng.h>
 #endif
-#ifdef CONFIG_INPUT_GP2A_SEMC
-#include <linux/input/gp2ap002a00f_semc.h>
+#ifdef CONFIG_INPUT_GP2A
+#include <linux/input/gp2ap002a00f.h>
 #endif
 
 #ifdef CONFIG_LEDS_AS3676
@@ -152,7 +152,7 @@
 #ifdef CONFIG_INPUT_BMA150_NG
 #define BMA150_GPIO			51
 #endif
-#ifdef CONFIG_INPUT_GP2A_SEMC
+#ifdef CONFIG_INPUT_GP2A
 #define GP2A_GPIO			20
 #endif
 
@@ -606,33 +606,10 @@ static struct synaptics_touchpad_platform_data synaptics_touchpad_data = {
 };
 #endif
 
-#ifdef CONFIG_INPUT_GP2A_SEMC
-static struct msm_gpio gp2a_gpio_config_data[] = {
-	{ GPIO_CFG(GP2A_GPIO, 0, GPIO_CFG_INPUT, GPIO_CFG_NO_PULL, GPIO_CFG_2MA), "gp2a_vo" },
-};
-
-static int gp2a_gpio_setup(void)
-{
-	int rc;
-	rc = msm_gpios_request_enable(gp2a_gpio_config_data,
-		ARRAY_SIZE(gp2a_gpio_config_data));
-
-	return rc;
-}
-
-static int gp2a_gpio_teardown(void)
-{
-	msm_gpios_disable_free(gp2a_gpio_config_data,
-		ARRAY_SIZE(gp2a_gpio_config_data));
-
-	return 0;
-}
-
+#ifdef CONFIG_INPUT_GP2A
 static struct gp2a_platform_data gp2a_platform_data = {
-	.gpio = GP2A_GPIO,
-	.wake = 1,
-	.gpio_setup = gp2a_gpio_setup,
-	.gpio_shutdown = gp2a_gpio_teardown,
+	.vout_gpio = GP2A_GPIO,
+	.wakeup = true,
 };
 #endif
 
@@ -651,7 +628,7 @@ static struct i2c_board_info msm_camera_boardinfo[] __initdata = {
 		.platform_data	= &synaptics_touchpad_data,
 	},
 #endif
-#ifdef CONFIG_INPUT_GP2A_SEMC
+#ifdef CONFIG_INPUT_GP2A
 	{
 		I2C_BOARD_INFO(GP2A_I2C_NAME, 0x88 >> 1),
 		.irq		= MSM_GPIO_TO_INT(GP2A_GPIO),
