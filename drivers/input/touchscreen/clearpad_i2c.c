@@ -36,7 +36,7 @@ static int clearpad_i2c_read(struct device *dev, u8 reg, u8 *buf, u8 len)
 
 static int clearpad_i2c_write(struct device *dev, u8 reg, const u8 *buf, u8 len)
 {
-	int rc;
+	int rc = 0;
 	u8 i;
 	for (i = 0; i < len; i++) {
 		rc = i2c_smbus_write_byte_data(to_i2c_client(dev),
