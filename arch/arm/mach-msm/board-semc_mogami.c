@@ -200,8 +200,6 @@
 	defined(CONFIG_TOUCHSCREEN_CYTTSP_SPI_SEMC)
 #define CYPRESS_TOUCH_GPIO_RESET	40
 #define CYPRESS_TOUCH_GPIO_IRQ		42
-#endif
-#ifdef CONFIG_TOUCHSCREEN_CY8CTMA300_SPI
 #define CYPRESS_TOUCH_GPIO_SPI_CS	46
 #endif
 #ifdef CONFIG_TOUCHSCREEN_CLEARPAD
@@ -2020,6 +2018,7 @@ int cyttsp_init(int on)
 					ARRAY_SIZE(ttsp_gpio_cfg_data));
 		if (rc)
 			goto ttsp_gpio_cfg_err;
+		gpio_set_value(CYPRESS_TOUCH_GPIO_SPI_CS, 1);
 		return 0;
 	} else {
 		rc = 0;
