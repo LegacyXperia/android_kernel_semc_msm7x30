@@ -132,13 +132,8 @@
 #if defined(CONFIG_LM3560) || defined(CONFIG_LM3561)
 #include <linux/lm356x.h>
 #endif
-#ifdef CONFIG_LEDS_AS3676
-#include <linux/leds-as3676.h>
-#endif
 #ifdef CONFIG_LEDS_AS3676_SEMC
 #include <linux/leds-as3676_semc.h>
-#endif
-#if defined(CONFIG_LEDS_AS3676) || defined(CONFIG_LEDS_AS3676_SEMC)
 #include "leds-semc.h"
 #endif
 
@@ -2502,7 +2497,7 @@ static struct i2c_board_info msm_i2c_board_info[] = {
 		.platform_data = &clearpad_platform_data,
 	},
 #endif
-#if defined(CONFIG_LEDS_AS3676) || defined(CONFIG_LEDS_AS3676_SEMC)
+#ifdef CONFIG_LEDS_AS3676_SEMC
 	{
 		/* Config-spec is 8-bit = 0x80, src-code need 7-bit => 0x40 */
 		I2C_BOARD_INFO("as3676", 0x80 >> 1),
