@@ -943,9 +943,7 @@ static int synaptics_clearpad_set_power(struct synaptics_clearpad *this)
 
 	if (should_wake && !(active & SYN_ACTIVE_POWER)) {
 
-#ifdef DEBUG_SUSPEND_RESUME
 		dev_info(&this->pdev->dev, "power ON\n");
-#endif
 
 		synaptics_clearpad_set_irq(this, IRQ_SET_POWER, true);
 		synaptics_read(this, SYNF(F01_RMI, DATA, 0x01), &irq, 1);
@@ -963,9 +961,7 @@ static int synaptics_clearpad_set_power(struct synaptics_clearpad *this)
 
 	} else if (!should_wake && (active & SYN_ACTIVE_POWER)) {
 
-#ifdef DEBUG_SUSPEND_RESUME
 		dev_info(&this->pdev->dev, "power OFF\n");
-#endif
 
 		rc = synaptics_put(this, SYNF(F01_RMI, CTRL, 0x00),
 			DEVICE_CONTROL_SLEEP_MODE_SENSOR_SLEEP);
@@ -1853,10 +1849,7 @@ static void synaptics_clearpad_early_suspend(struct early_suspend *handler)
 	struct synaptics_clearpad *this =
 	container_of(handler, struct synaptics_clearpad, early_suspend);
 
-#ifdef DEBUG_SUSPEND_RESUME
 	dev_info(&this->pdev->dev, "early suspend\n");
-#endif
-
 	synaptics_clearpad_pm_suspend(&this->pdev->dev);
 }
 
@@ -1865,10 +1858,7 @@ static void synaptics_clearpad_late_resume(struct early_suspend *handler)
 	struct synaptics_clearpad *this =
 	container_of(handler, struct synaptics_clearpad, early_suspend);
 
-#ifdef DEBUG_SUSPEND_RESUME
 	dev_info(&this->pdev->dev, "late resume\n");
-#endif
-
 	synaptics_clearpad_pm_resume(&this->pdev->dev);
 }
 #endif
