@@ -1668,7 +1668,7 @@ static int cyttsp_resume(struct cyttsp *ts)
 	struct cyttsp_xydata xydata;
 	int counter = 10;
 
-	dev_info(ts->pdev, "%s: Enter\n", __func__);
+	dev_dbg(ts->pdev, "%s: Enter\n", __func__);
 	if (ts->platform_data->use_sleep && (ts->platform_data->power_state !=
 							CY_ACTIVE_STATE)) {
 		if (!ts->platform_data->wakeup) {
@@ -1678,13 +1678,13 @@ static int cyttsp_resume(struct cyttsp *ts)
 			goto exit;
 		}
 		while (counter--) {
-			dev_info(ts->pdev, "%s: Waking ...\n", __func__);
+			dev_dbg(ts->pdev, "%s: Waking ...\n", __func__);
 			retval = ts->platform_data->wakeup();
 			if (retval)
 				continue;
 			retval = ttsp_read_block_data(ts, CY_REG_BASE,
 					sizeof(xydata), &xydata);
-			dev_info(ts->pdev, "%s: hst_mode %02x\n",
+			dev_dbg(ts->pdev, "%s: hst_mode %02x\n",
 					__func__, xydata.hst_mode);
 			/*
 			* Not able to  reed - seems we are still in sleep mode
@@ -1700,7 +1700,7 @@ static int cyttsp_resume(struct cyttsp *ts)
 				msleep(CYTTSP_SCAN_PERIOD);
 				retval = ttsp_read_block_data(ts, CY_REG_BASE,
 						sizeof(xydata), &xydata);
-				dev_info(ts->pdev, "%s: hst_mode %02x\n",
+				dev_dbg(ts->pdev, "%s: hst_mode %02x\n",
 						__func__, xydata.hst_mode);
 				if (retval)
 					continue;
@@ -1721,7 +1721,7 @@ static int cyttsp_suspend(struct cyttsp *ts)
 	u8 sleep_mode = 0;
 	int retval = 0;
 
-	dev_info(ts->pdev, "%s: Enter\n", __func__);
+	dev_dbg(ts->pdev, "%s: Enter\n", __func__);
 	if (ts->platform_data->use_sleep &&
 			(ts->platform_data->power_state == CY_ACTIVE_STATE)) {
 		sleep_mode = CY_DEEP_SLEEP_MODE;

@@ -2049,7 +2049,6 @@ int cyttsp_wakeup(void)
 	gpio_set_value(CYPRESS_TOUCH_GPIO_IRQ, 0);
 	msleep(1);
 	gpio_set_value(CYPRESS_TOUCH_GPIO_IRQ, 1);
-	printk(KERN_INFO "%s: wakeup\n", __func__);
 	ret = gpio_direction_input(CYPRESS_TOUCH_GPIO_IRQ);
 	if (ret) {
 		printk(KERN_ERR "%s: Failed to request gpio_direction_input\n",
