@@ -1938,6 +1938,7 @@ static int cypress_touch_gpio_init(void)
 		return rc;
 
 	gpio_set_value(CYPRESS_TOUCH_GPIO_RESET, 1);
+	gpio_set_value(CYPRESS_TOUCH_GPIO_SPI_CS, 1);
 	return 0;
 }
 
