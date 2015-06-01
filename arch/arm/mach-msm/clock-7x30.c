@@ -1494,7 +1494,7 @@ static struct rcg_clk mdp_clk = {
 	.c = {
 		.dbg_name = "mdp_clk",
 		.ops = &clk_ops_rcg,
-		VDD_DIG_FMAX_MAP2(NOMINAL, 153600000, HIGH, 192000000),
+		VDD_DIG_FMAX_MAP2(NOMINAL, 153600000, HIGH, 245760000),
 		CLK_INIT(mdp_clk.c),
 		.depends = &axi_mdp_clk.c,
 	},
@@ -3004,7 +3004,7 @@ static void __init msm7x30_clock_post_init(void)
 	/* Sync the LPA_CODEC clock to MI2S_CODEC_RX */
 	clk_set_rate(&lpa_codec_clk.c, 1);
 	/* Sync the GRP2D clock to AXI */
-	clk_set_rate(&grp_2d_clk.c, 1);
+	clk_set_rate(&grp_2d_clk.c, 245760000);
 }
 
 struct clock_init_data msm7x30_clock_init_data __initdata = {
