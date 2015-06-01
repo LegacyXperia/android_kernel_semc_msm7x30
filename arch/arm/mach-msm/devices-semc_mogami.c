@@ -1190,14 +1190,14 @@ static struct resource kgsl_2d0_resources[] = {
 static struct kgsl_device_platform_data kgsl_2d0_pdata = {
 	.pwrlevel = {
 		{
-			.gpu_freq = 0,
+			.gpu_freq = 245760000,
 			.bus_freq = 192000000,
 		},
 	},
 	.init_level = 0,
 	.num_levels = 1,
 	/* HW workaround, run Z180 SYNC @ 192 MHZ */
-	.set_grp_async = NULL,
+	.set_grp_async = set_grp2d_async,
 	.idle_timeout = HZ/10,
 	.nap_allowed = true,
 	.idle_needed = true,
