@@ -2949,7 +2949,7 @@ static struct mddi_platform_data mddi_pdata = {
 static struct msm_panel_common_pdata mdp_pdata = {
 	.hw_revision_addr = 0xac001270,
 	.gpio = 30,
-	.mdp_max_clk = 192000000,
+	.mdp_max_clk = 245760000,
 	.mdp_rev = MDP_REV_40,
 	.mem_hid = BIT(ION_CP_WB_HEAP_ID),
 };
@@ -3633,7 +3633,7 @@ static struct mmc_platform_data msm7x30_sdc4_data = {
 	.msmsdcc_fmin	= 144000,
 	.msmsdcc_fmid	= 24576000,
 	.msmsdcc_fmax	= 49152000,
-	.nonremovable	= 0,
+	.nonremovable	= 1,
 };
 #endif
 
