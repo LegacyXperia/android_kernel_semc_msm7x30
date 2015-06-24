@@ -931,6 +931,24 @@ static int __init meminfo_cmp(const void *_a, const void *_b)
 	return cmp < 0 ? -1 : cmp > 0 ? 1 : 0;
 }
 
+/*
+ * HACK: This function sets the androidboot.mode=charger based
+ * on the Sony Mobile 'startup' parameter.
+ */
+static int __init sony_param_startup(char *p)
+{
+	unsigned long sony_startup;
+
+	if (kstrtoul(p, 16, &sony_startup))
+		return 1;
+
+	if ((sony_startup & 0x31) == 0x20)
+		strlcat(boot_command_line, " androidboot.mode=charger",
+			COMMAND_LINE_SIZE);
+	return 0;
+}
+early_param("startup", sony_param_startup);
+
 void __init setup_arch(char **cmdline_p)
 {
 	struct machine_desc *mdesc;
