@@ -598,7 +598,7 @@ static int mdss_fb_alloc_fbmem(struct msm_fb_data_type *mfd)
 					 ION_HEAP(ION_CP_MM_HEAP_ID) |
 					 ION_HEAP(ION_SF_HEAP_ID), 0);
 			if (IS_ERR_OR_NULL(mfd->ihdl)) {
-				pr_err("unable to alloc fbmem from ion (%p)\n",
+				pr_err("unable to alloc fbmem from ion (%pK)\n",
 					mfd->ihdl);
 				return -ENOMEM;
 			}
@@ -614,7 +614,7 @@ static int mdss_fb_alloc_fbmem(struct msm_fb_data_type *mfd)
 			}
 		}
 
-		pr_info("allocating %u bytes at %p (%lx phys) for fb %d\n",
+		pr_info("allocating %u bytes at %pK (%lx phys) for fb %d\n",
 			size, virt, phys, mfd->index);
 	} else {
 		pr_debug("no memory allocated for fb%d\n", mfd->index);
