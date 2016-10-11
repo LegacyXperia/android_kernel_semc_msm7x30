@@ -87,7 +87,7 @@ CONFIG_ZSMALLOC=y
 # CONFIG_CP_ACCESS is not set
 CONFIG_ZBOOT_ROM_TEXT=0x0
 CONFIG_ZBOOT_ROM_BSS=0x0
-CONFIG_CMDLINE="androidboot.hardware=semc androidboot.selinux=permissive mtdparts=msm_nand:460800k@94720k(system),480768k@555520k(userdata),8192k@1036288k(cache)"
+CONFIG_CMDLINE="androidboot.hardware=semc androidboot.selinux=permissive mtdparts=msm_nand:941568k@94720k(system),4096k@1036288k(userdata),4096k@1040384k(cache)"
 CONFIG_CMDLINE_EXTEND=y
 CONFIG_CPU_FREQ=y
 CONFIG_CPU_FREQ_GOV_ONDEMAND=y
