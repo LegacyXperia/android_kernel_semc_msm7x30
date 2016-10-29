@@ -455,12 +455,14 @@ int mdp4_mddi_pipe_commit(int cndx, int wait)
 	mdp4_stat.overlay_commit[pipe->mixer_num]++;
 
 	if (wait) {
+		mutex_unlock(&vctrl->mfd->dma->ov_mutex);
 		/* In case of writeback, there is explicit need to synchronize the first
 		 * rendering before writing to display. */
 		if (pipe->ov_blt_addr)
 			mdp4_mddi_wait4ov(0);
 		else
 			mdp4_mddi_wait4vsync(0);
+		mutex_lock(&vctrl->mfd->dma->ov_mutex);
 	}
 
 	return cnt;
