@@ -36,6 +36,8 @@
 #include <linux/usb/ch9.h>
 #include <linux/usb/f_mtp.h>
 
+#define MTP_RX_BUFFER_INIT_SIZE    1048576
+
 #define MTP_BULK_BUFFER_SIZE       16384
 #define INTR_BUFFER_SIZE           28
 
@@ -50,7 +52,7 @@
 #define STATE_ERROR                 4   /* error from completion routine */
 
 /* number of tx and rx requests to allocate */
-#define TX_REQ_MAX 4
+#define MTP_TX_REQ_MAX 8
 #define RX_REQ_MAX 2
 #define INTR_REQ_MAX 5
 
@@ -67,8 +69,14 @@
 #define MTP_RESPONSE_OK             0x2001
 #define MTP_RESPONSE_DEVICE_BUSY    0x2019
 
-unsigned int mtp_rx_req_len = MTP_BULK_BUFFER_SIZE;
+unsigned int mtp_rx_req_len = MTP_RX_BUFFER_INIT_SIZE;
 module_param(mtp_rx_req_len, uint, S_IRUGO | S_IWUSR);
+
+unsigned int mtp_tx_req_len = MTP_BULK_BUFFER_SIZE;
+module_param(mtp_tx_req_len, uint, S_IRUGO | S_IWUSR);
+
+unsigned int mtp_tx_reqs = MTP_TX_REQ_MAX;
+module_param(mtp_tx_reqs, uint, S_IRUGO | S_IWUSR);
 
 static const char mtp_shortname[] = "mtp_usb";
 
@@ -132,6 +140,40 @@ static struct usb_interface_descriptor ptp_interface_desc = {
 	.bInterfaceProtocol     = 1,
 };
 
+static struct usb_endpoint_descriptor mtp_superspeed_in_desc = {
+	.bLength                = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType        = USB_DT_ENDPOINT,
+	.bEndpointAddress       = USB_DIR_IN,
+	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
+	.wMaxPacketSize         = __constant_cpu_to_le16(1024),
+};
+
+static struct usb_ss_ep_comp_descriptor mtp_superspeed_in_comp_desc = {
+	.bLength =		sizeof mtp_superspeed_in_comp_desc,
+	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
+
+	/* the following 2 values can be tweaked if necessary */
+	.bMaxBurst =		2,
+	/* .bmAttributes =	0, */
+};
+
+static struct usb_endpoint_descriptor mtp_superspeed_out_desc = {
+	.bLength                = USB_DT_ENDPOINT_SIZE,
+	.bDescriptorType        = USB_DT_ENDPOINT,
+	.bEndpointAddress       = USB_DIR_OUT,
+	.bmAttributes           = USB_ENDPOINT_XFER_BULK,
+	.wMaxPacketSize         = __constant_cpu_to_le16(1024),
+};
+
+static struct usb_ss_ep_comp_descriptor mtp_superspeed_out_comp_desc = {
+	.bLength =		sizeof mtp_superspeed_out_comp_desc,
+	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
+
+	/* the following 2 values can be tweaked if necessary */
+	 .bMaxBurst =		2,
+	/* .bmAttributes =	0, */
+};
+
 static struct usb_endpoint_descriptor mtp_highspeed_in_desc = {
 	.bLength                = USB_DT_ENDPOINT_SIZE,
 	.bDescriptorType        = USB_DT_ENDPOINT,
@@ -171,6 +213,16 @@ static struct usb_endpoint_descriptor mtp_intr_desc = {
 	.bInterval              = 6,
 };
 
+static struct usb_ss_ep_comp_descriptor mtp_superspeed_intr_comp_desc = {
+	.bLength =		sizeof mtp_superspeed_intr_comp_desc,
+	.bDescriptorType =	USB_DT_SS_ENDPOINT_COMP,
+
+	/* the following 3 values can be tweaked if necessary */
+	/* .bMaxBurst =		0, */
+	/* .bmAttributes =	0, */
+	.wBytesPerInterval =	cpu_to_le16(INTR_BUFFER_SIZE),
+};
+
 static struct usb_descriptor_header *fs_mtp_descs[] = {
 	(struct usb_descriptor_header *) &mtp_interface_desc,
 	(struct usb_descriptor_header *) &mtp_fullspeed_in_desc,
@@ -187,6 +239,17 @@ static struct usb_descriptor_header *hs_mtp_descs[] = {
 	NULL,
 };
 
+static struct usb_descriptor_header *ss_mtp_descs[] = {
+	(struct usb_descriptor_header *) &mtp_interface_desc,
+	(struct usb_descriptor_header *) &mtp_superspeed_in_desc,
+	(struct usb_descriptor_header *) &mtp_superspeed_in_comp_desc,
+	(struct usb_descriptor_header *) &mtp_superspeed_out_desc,
+	(struct usb_descriptor_header *) &mtp_superspeed_out_comp_desc,
+	(struct usb_descriptor_header *) &mtp_intr_desc,
+	(struct usb_descriptor_header *) &mtp_superspeed_intr_comp_desc,
+	NULL,
+};
+
 static struct usb_descriptor_header *fs_ptp_descs[] = {
 	(struct usb_descriptor_header *) &ptp_interface_desc,
 	(struct usb_descriptor_header *) &mtp_fullspeed_in_desc,
@@ -200,6 +263,17 @@ static struct usb_descriptor_header *hs_ptp_descs[] = {
 	(struct usb_descriptor_header *) &mtp_highspeed_in_desc,
 	(struct usb_descriptor_header *) &mtp_highspeed_out_desc,
 	(struct usb_descriptor_header *) &mtp_intr_desc,
+	NULL,
+};
+
+static struct usb_descriptor_header *ss_ptp_descs[] = {
+	(struct usb_descriptor_header *) &ptp_interface_desc,
+	(struct usb_descriptor_header *) &mtp_superspeed_in_desc,
+	(struct usb_descriptor_header *) &mtp_superspeed_in_comp_desc,
+	(struct usb_descriptor_header *) &mtp_superspeed_out_desc,
+	(struct usb_descriptor_header *) &mtp_superspeed_out_comp_desc,
+	(struct usb_descriptor_header *) &mtp_intr_desc,
+	(struct usb_descriptor_header *) &mtp_superspeed_intr_comp_desc,
 	NULL,
 };
 
@@ -422,14 +496,35 @@ static int mtp_create_bulk_endpoints(struct mtp_dev *dev,
 	ep->driver_data = dev;		/* claim the endpoint */
 	dev->ep_intr = ep;
 
+retry_tx_alloc:
+	if (mtp_tx_req_len > MTP_BULK_BUFFER_SIZE)
+		mtp_tx_reqs = 4;
+
 	/* now allocate requests for our endpoints */
-	for (i = 0; i < TX_REQ_MAX; i++) {
-		req = mtp_request_new(dev->ep_in, MTP_BULK_BUFFER_SIZE);
-		if (!req)
-			goto fail;
+	for (i = 0; i < mtp_tx_reqs; i++) {
+		req = mtp_request_new(dev->ep_in, mtp_tx_req_len);
+		if (!req) {
+			if (mtp_tx_req_len <= MTP_BULK_BUFFER_SIZE)
+				goto fail;
+			while ((req = mtp_req_get(dev, &dev->tx_idle)))
+				mtp_request_free(req, dev->ep_in);
+			mtp_tx_req_len = MTP_BULK_BUFFER_SIZE;
+			mtp_tx_reqs = MTP_TX_REQ_MAX;
+			goto retry_tx_alloc;
+		}
 		req->complete = mtp_complete_in;
 		mtp_req_put(dev, &dev->tx_idle, req);
 	}
+
+	/*
+	 * The RX buffer should be aligned to EP max packet for
+	 * some controllers.  At bind time, we don't know the
+	 * operational speed.  Hence assuming super speed max
+	 * packet size.
+	 */
+	if (mtp_rx_req_len % 1024)
+		mtp_rx_req_len = MTP_BULK_BUFFER_SIZE;
+
 retry_rx_alloc:
 	for (i = 0; i < RX_REQ_MAX; i++) {
 		req = mtp_request_new(dev->ep_out, mtp_rx_req_len);
@@ -465,12 +560,14 @@ static ssize_t mtp_read(struct file *fp, char __user *buf,
 	struct mtp_dev *dev = fp->private_data;
 	struct usb_composite_dev *cdev = dev->cdev;
 	struct usb_request *req;
-	int r = count, xfer;
+	int r = count, xfer, len;
 	int ret = 0;
 
 	DBG(cdev, "mtp_read(%d)\n", count);
 
-	if (count > mtp_rx_req_len)
+	len = ALIGN(count, dev->ep_out->maxpacket);
+
+	if (len > mtp_rx_req_len)
 		return -EINVAL;
 
 	/* we will block until we're online */
@@ -494,7 +591,7 @@ static ssize_t mtp_read(struct file *fp, char __user *buf,
 requeue_req:
 	/* queue a request */
 	req = dev->rx_req[0];
-	req->length = count;
+	req->length = len;
 	dev->rx_done = 0;
 	ret = usb_ep_queue(dev->ep_out, req, GFP_KERNEL);
 	if (ret < 0) {
@@ -599,8 +696,8 @@ static ssize_t mtp_write(struct file *fp, const char __user *buf,
 			break;
 		}
 
-		if (count > MTP_BULK_BUFFER_SIZE)
-			xfer = MTP_BULK_BUFFER_SIZE;
+		if (count > mtp_tx_req_len)
+			xfer = mtp_tx_req_len;
 		else
 			xfer = count;
 		if (xfer && copy_from_user(req->buf, buf, xfer)) {
@@ -692,8 +789,8 @@ static void send_file_work(struct work_struct *data)
 			break;
 		}
 
-		if (count > MTP_BULK_BUFFER_SIZE)
-			xfer = MTP_BULK_BUFFER_SIZE;
+		if (count > mtp_tx_req_len)
+			xfer = mtp_tx_req_len;
 		else
 			xfer = count;
 
@@ -761,6 +858,9 @@ static void receive_file_work(struct work_struct *data)
 	count = dev->xfer_file_length;
 
 	DBG(cdev, "receive_file_work(%lld)\n", count);
+	if (!IS_ALIGNED(count, dev->ep_out->maxpacket))
+		DBG(cdev, "%s- count(%lld) not multiple of mtu(%d)\n", __func__,
+						count, dev->ep_out->maxpacket);
 
 	while (count > 0 || write_req) {
 		if (count > 0) {
@@ -768,8 +868,9 @@ static void receive_file_work(struct work_struct *data)
 			read_req = dev->rx_req[cur_buf];
 			cur_buf = (cur_buf + 1) % RX_REQ_MAX;
 
-			read_req->length = (count > mtp_rx_req_len
-					? mtp_rx_req_len : count);
+			/* some h/w expects size to be aligned to ep's MTU */
+			read_req->length = mtp_rx_req_len;
+
 			dev->rx_done = 0;
 			ret = usb_ep_queue(dev->ep_out, read_req, GFP_KERNEL);
 			if (ret < 0) {
@@ -800,11 +901,18 @@ static void receive_file_work(struct work_struct *data)
 				dev->rx_done || dev->state != STATE_BUSY);
 			if (dev->state == STATE_CANCELED
 					|| dev->state == STATE_OFFLINE) {
-				r = -ECANCELED;
+				if (dev->state == STATE_OFFLINE)
+					r = -EIO;
+				else
+					r = -ECANCELED;
 				if (!dev->rx_done)
 					usb_ep_dequeue(dev->ep_out, read_req);
 				break;
 			}
+			/* Check if we aligned the size due to MTU constraint */
+			if (count < read_req->length)
+				read_req->actual = (read_req->actual > count ?
+						count : read_req->actual);
 			/* if xfer_file_length is 0xFFFFFFFF, then we read until
 			 * we get a zero length packet
 			 */
@@ -1109,7 +1217,6 @@ mtp_function_bind(struct usb_configuration *c, struct usb_function *f)
 	if (id < 0)
 		return id;
 	mtp_interface_desc.bInterfaceNumber = id;
-	mtp_ext_config_desc.function.bFirstInterfaceNumber = id;
 
 	/* allocate endpoints */
 	ret = mtp_create_bulk_endpoints(dev, &mtp_fullspeed_in_desc,
@@ -1122,6 +1229,14 @@ mtp_function_bind(struct usb_configuration *c, struct usb_function *f)
 		mtp_highspeed_in_desc.bEndpointAddress =
 			mtp_fullspeed_in_desc.bEndpointAddress;
 		mtp_highspeed_out_desc.bEndpointAddress =
+			mtp_fullspeed_out_desc.bEndpointAddress;
+	}
+
+	/* support super speed hardware */
+	if (gadget_is_superspeed(c->cdev->gadget)) {
+		mtp_superspeed_in_desc.bEndpointAddress =
+			mtp_fullspeed_in_desc.bEndpointAddress;
+		mtp_superspeed_out_desc.bEndpointAddress =
 			mtp_fullspeed_out_desc.bEndpointAddress;
 	}
 
@@ -1238,9 +1353,13 @@ static int mtp_bind_config(struct usb_configuration *c, bool ptp_config)
 	if (ptp_config) {
 		dev->function.descriptors = fs_ptp_descs;
 		dev->function.hs_descriptors = hs_ptp_descs;
+		if (gadget_is_superspeed(c->cdev->gadget))
+			dev->function.ss_descriptors = ss_ptp_descs;
 	} else {
 		dev->function.descriptors = fs_mtp_descs;
 		dev->function.hs_descriptors = hs_mtp_descs;
+		if (gadget_is_superspeed(c->cdev->gadget))
+			dev->function.ss_descriptors = ss_mtp_descs;
 	}
 	dev->function.bind = mtp_function_bind;
 	dev->function.unbind = mtp_function_unbind;
